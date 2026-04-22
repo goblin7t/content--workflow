@@ -1,0 +1,1770 @@
+openapi: 3.1.0
+info:
+  title: Content Workflow API
+  version: 0.1.0
+  summary: MVP API for content ingestion, drafting, review, publishing, and analytics snapshots.
+  description: |
+    This specification covers the MVP workflow:
+    ingestion -> normalization -> topic selection -> draft generation -> asset rendering -> review -> publishing -> metrics snapshots.
+
+    Implementation constraints encoded in this spec:
+    - `Draft.sourceRefs` is required and must contain at least one source reference before review submission.
+    - `ChannelVariant` is a platform-specific content object and does not expose or reuse the draft body as the publish payload.
+    - `POST /publish-tasks` and `POST /publish-tasks/{publishTaskId}/run` are idempotent and require `Idempotency-Key`.
+    - `PerformanceMetric` records time-series snapshots with `capturedAt`; the API does not support in-place metric updates.
+    - `RawItem.contentHash` and `NormalizedItem.dedupeKey` are both required to support raw-content and semantic deduplication separately.
+servers:
+  - url: https://api.example.com/api/v1
+    description: Production
+  - url: http://localhost:3000/api/v1
+    description: Local development
+tags:
+  - name: Sources
+  - name: Ingestion
+  - name: Normalization
+  - name: Topics
+  - name: Drafts
+  - name: Assets
+  - name: ChannelVariants
+  - name: Review
+  - name: Publish
+  - name: Metrics
+  - name: Dashboard
+security:
+  - bearerAuth: []
+paths:
+  /sources:
+    get:
+      tags: [Sources]
+      summary: List content sources
+      parameters:
+        - $ref: '#/components/parameters/StatusQuery'
+        - in: query
+          name: platform
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Source list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceListResponse'
+    post:
+      tags: [Sources]
+      summary: Create a content source
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequest'
+      responses:
+        '201':
+          description: Source created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /sources/{sourceId}:
+    get:
+      tags: [Sources]
+      summary: Get a single source
+      parameters:
+        - $ref: '#/components/parameters/SourceId'
+      responses:
+        '200':
+          description: Source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Sources]
+      summary: Update a source
+      parameters:
+        - $ref: '#/components/parameters/SourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSourceRequest'
+      responses:
+        '200':
+          description: Updated source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sources/{sourceId}/sync:
+    post:
+      tags: [Ingestion]
+      summary: Trigger source sync
+      parameters:
+        - $ref: '#/components/parameters/SourceId'
+      responses:
+        '202':
+          description: Sync queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+
+  /ingestion/run:
+    post:
+      tags: [Ingestion]
+      summary: Trigger ingestion for all active sources
+      responses:
+        '202':
+          description: Ingestion queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+
+  /raw-items:
+    get:
+      tags: [Ingestion]
+      summary: List raw ingested items
+      parameters:
+        - in: query
+          name: sourceId
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageQuery'
+      responses:
+        '200':
+          description: Raw item list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawItemListResponse'
+
+  /raw-items/{rawItemId}:
+    get:
+      tags: [Ingestion]
+      summary: Get a raw item
+      parameters:
+        - $ref: '#/components/parameters/RawItemId'
+      responses:
+        '200':
+          description: Raw item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /normalization/run:
+    post:
+      tags: [Normalization]
+      summary: Trigger normalization and semantic deduplication
+      responses:
+        '202':
+          description: Normalization queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+
+  /normalized-items:
+    get:
+      tags: [Normalization]
+      summary: List normalized items
+      parameters:
+        - in: query
+          name: topicId
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageQuery'
+      responses:
+        '200':
+          description: Normalized item list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizedItemListResponse'
+
+  /normalized-items/{normalizedItemId}:
+    get:
+      tags: [Normalization]
+      summary: Get a normalized item
+      parameters:
+        - $ref: '#/components/parameters/NormalizedItemId'
+      responses:
+        '200':
+          description: Normalized item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizedItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /topics:
+    get:
+      tags: [Topics]
+      summary: List topics
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/StatusQuery'
+      responses:
+        '200':
+          description: Topic list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+
+  /topics/generate:
+    post:
+      tags: [Topics]
+      summary: Generate daily topic candidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateTopicsRequest'
+      responses:
+        '200':
+          description: Generated topic candidates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+
+  /topics/{topicId}:
+    get:
+      tags: [Topics]
+      summary: Get a topic
+      parameters:
+        - $ref: '#/components/parameters/TopicId'
+      responses:
+        '200':
+          description: Topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Topics]
+      summary: Update a topic
+      parameters:
+        - $ref: '#/components/parameters/TopicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTopicRequest'
+      responses:
+        '200':
+          description: Updated topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+
+  /topics/{topicId}/select:
+    post:
+      tags: [Topics]
+      summary: Mark a topic as selected
+      parameters:
+        - $ref: '#/components/parameters/TopicId'
+      responses:
+        '200':
+          description: Topic selected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+
+  /topics/{topicId}/reject:
+    post:
+      tags: [Topics]
+      summary: Reject a topic
+      parameters:
+        - $ref: '#/components/parameters/TopicId'
+      responses:
+        '200':
+          description: Topic rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+
+  /drafts:
+    get:
+      tags: [Drafts]
+      summary: List drafts
+      parameters:
+        - in: query
+          name: topicId
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/StatusQuery'
+      responses:
+        '200':
+          description: Draft list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftListResponse'
+
+  /drafts/generate:
+    post:
+      tags: [Drafts]
+      summary: Generate a draft from a topic
+      description: Generated drafts must include at least one source reference.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDraftRequest'
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+        '409':
+          description: Draft cannot be generated because the topic lacks valid normalized inputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /drafts/{draftId}:
+    get:
+      tags: [Drafts]
+      summary: Get a draft
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      responses:
+        '200':
+          description: Draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Drafts]
+      summary: Update a draft
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDraftRequest'
+      responses:
+        '200':
+          description: Updated draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+
+  /drafts/{draftId}/regenerate:
+    post:
+      tags: [Drafts]
+      summary: Regenerate a draft
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      responses:
+        '202':
+          description: Regeneration queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+
+  /drafts/{draftId}/submit-review:
+    post:
+      tags: [Drafts]
+      summary: Submit a draft for review
+      description: |
+        Review submission fails unless the draft has at least one `sourceRefs` entry.
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      responses:
+        '200':
+          description: Draft moved to review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTask'
+        '409':
+          description: Draft missing required source references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /drafts/{draftId}/render:
+    post:
+      tags: [Assets]
+      summary: Render assets for a draft
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenderDraftRequest'
+      responses:
+        '202':
+          description: Render queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+
+  /drafts/{draftId}/assets:
+    get:
+      tags: [Assets]
+      summary: List draft assets
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      responses:
+        '200':
+          description: Asset list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetListResponse'
+
+  /assets/{assetId}:
+    get:
+      tags: [Assets]
+      summary: Get a single asset
+      parameters:
+        - $ref: '#/components/parameters/AssetId'
+      responses:
+        '200':
+          description: Asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Assets]
+      summary: Update asset metadata
+      parameters:
+        - $ref: '#/components/parameters/AssetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAssetRequest'
+      responses:
+        '200':
+          description: Updated asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+
+  /drafts/{draftId}/channel-variants:
+    post:
+      tags: [ChannelVariants]
+      summary: Generate platform-specific variants for a draft
+      description: |
+        Channel variants are independent platform payloads.
+        They intentionally exclude the draft body to prevent direct reuse of generic draft text as the publish payload.
+      parameters:
+        - $ref: '#/components/parameters/DraftId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelVariantsRequest'
+      responses:
+        '201':
+          description: Variants created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelVariantListResponse'
+
+  /channel-variants:
+    get:
+      tags: [ChannelVariants]
+      summary: List channel variants
+      parameters:
+        - in: query
+          name: draftId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: platform
+          schema:
+            $ref: '#/components/schemas/PlatformType'
+      responses:
+        '200':
+          description: Variant list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelVariantListResponse'
+
+  /channel-variants/{channelVariantId}:
+    get:
+      tags: [ChannelVariants]
+      summary: Get a channel variant
+      parameters:
+        - $ref: '#/components/parameters/ChannelVariantId'
+      responses:
+        '200':
+          description: Channel variant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelVariant'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [ChannelVariants]
+      summary: Update a channel variant
+      parameters:
+        - $ref: '#/components/parameters/ChannelVariantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateChannelVariantRequest'
+      responses:
+        '200':
+          description: Updated channel variant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelVariant'
+
+  /review-tasks:
+    get:
+      tags: [Review]
+      summary: List review tasks
+      parameters:
+        - $ref: '#/components/parameters/StatusQuery'
+        - in: query
+          name: reviewerId
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Review task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTaskListResponse'
+    post:
+      tags: [Review]
+      summary: Create a review task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewTaskRequest'
+      responses:
+        '201':
+          description: Review task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTask'
+
+  /review-tasks/{reviewTaskId}:
+    get:
+      tags: [Review]
+      summary: Get a review task
+      parameters:
+        - $ref: '#/components/parameters/ReviewTaskId'
+      responses:
+        '200':
+          description: Review task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTask'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /review-tasks/{reviewTaskId}/approve:
+    post:
+      tags: [Review]
+      summary: Approve a review task
+      parameters:
+        - $ref: '#/components/parameters/ReviewTaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveReviewTaskRequest'
+      responses:
+        '200':
+          description: Review task approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTask'
+
+  /review-tasks/{reviewTaskId}/reject:
+    post:
+      tags: [Review]
+      summary: Reject a review task
+      parameters:
+        - $ref: '#/components/parameters/ReviewTaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectReviewTaskRequest'
+      responses:
+        '200':
+          description: Review task rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTask'
+
+  /review-tasks/{reviewTaskId}/request-regenerate:
+    post:
+      tags: [Review]
+      summary: Request regeneration from review
+      parameters:
+        - $ref: '#/components/parameters/ReviewTaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectReviewTaskRequest'
+      responses:
+        '200':
+          description: Regeneration requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewTask'
+
+  /publish-tasks:
+    get:
+      tags: [Publish]
+      summary: List publish tasks
+      parameters:
+        - $ref: '#/components/parameters/StatusQuery'
+        - in: query
+          name: platform
+          schema:
+            $ref: '#/components/schemas/PlatformType'
+      responses:
+        '200':
+          description: Publish task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTaskListResponse'
+    post:
+      tags: [Publish]
+      summary: Create a publish task
+      description: |
+        This endpoint is idempotent. Clients must send `Idempotency-Key`.
+        Replays with the same key and same effective payload return the original task.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePublishTaskRequest'
+      responses:
+        '201':
+          description: Publish task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTask'
+        '200':
+          description: Existing publish task returned for an idempotent replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTask'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /publish-tasks/{publishTaskId}:
+    get:
+      tags: [Publish]
+      summary: Get a publish task
+      parameters:
+        - $ref: '#/components/parameters/PublishTaskId'
+      responses:
+        '200':
+          description: Publish task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTask'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /publish-tasks/{publishTaskId}/run:
+    post:
+      tags: [Publish]
+      summary: Run a publish task immediately
+      description: |
+        This endpoint is idempotent. Clients must send `Idempotency-Key`.
+        Replays must not create duplicate outbound posts.
+      parameters:
+        - $ref: '#/components/parameters/PublishTaskId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Publish run queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTask'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /publish-tasks/{publishTaskId}/retry:
+    post:
+      tags: [Publish]
+      summary: Retry a failed publish task
+      parameters:
+        - $ref: '#/components/parameters/PublishTaskId'
+      responses:
+        '202':
+          description: Retry queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTask'
+
+  /publish-tasks/{publishTaskId}/cancel:
+    post:
+      tags: [Publish]
+      summary: Cancel a queued publish task
+      parameters:
+        - $ref: '#/components/parameters/PublishTaskId'
+      responses:
+        '200':
+          description: Publish task cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTask'
+
+  /metrics/sync:
+    post:
+      tags: [Metrics]
+      summary: Pull fresh metrics snapshots from platforms
+      responses:
+        '202':
+          description: Metrics sync queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+
+  /metrics:
+    get:
+      tags: [Metrics]
+      summary: List performance metric snapshots
+      description: Returns time-series snapshots, not mutable aggregate counters.
+      parameters:
+        - in: query
+          name: platform
+          schema:
+            $ref: '#/components/schemas/PlatformType'
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Metrics snapshots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetricListResponse'
+
+  /posts/{publishTaskId}/performance:
+    get:
+      tags: [Metrics]
+      summary: Get metrics snapshots for a published post
+      parameters:
+        - $ref: '#/components/parameters/PublishTaskId'
+      responses:
+        '200':
+          description: Metrics snapshots for the publish task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetricListResponse'
+
+  /dashboard/overview:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard overview metrics
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardOverview'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    SourceId:
+      in: path
+      name: sourceId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RawItemId:
+      in: path
+      name: rawItemId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    NormalizedItemId:
+      in: path
+      name: normalizedItemId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TopicId:
+      in: path
+      name: topicId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DraftId:
+      in: path
+      name: draftId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AssetId:
+      in: path
+      name: assetId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ChannelVariantId:
+      in: path
+      name: channelVariantId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ReviewTaskId:
+      in: path
+      name: reviewTaskId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PublishTaskId:
+      in: path
+      name: publishTaskId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    StatusQuery:
+      in: query
+      name: status
+      schema:
+        type: string
+    PageQuery:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 255
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Request conflicts with current resource state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    SourceType:
+      type: string
+      enum: [rss, social_api, manual]
+
+    SourceStatus:
+      type: string
+      enum: [active, disabled]
+
+    TopicStatus:
+      type: string
+      enum: [candidate, selected, rejected, archived]
+
+    DraftType:
+      type: string
+      enum: [summary, deep]
+
+    DraftStatus:
+      type: string
+      enum: [draft, rendered, in_review, approved, rejected, scheduled, published, failed]
+
+    ReviewStatus:
+      type: string
+      enum: [pending, approved, rejected, regenerate_requested]
+
+    PublishStatus:
+      type: string
+      enum: [queued, running, published, failed, cancelled]
+
+    PlatformType:
+      type: string
+      enum: [xiaohongshu, douyin, tiktok, facebook]
+
+    AssetType:
+      type: string
+      enum: [cover, page, thumbnail]
+
+    SourceReference:
+      type: object
+      additionalProperties: false
+      required: [sourceId, normalizedItemId, title, url]
+      properties:
+        sourceId:
+          type: string
+          format: uuid
+        normalizedItemId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        publishedAt:
+          type: string
+          format: date-time
+
+    Source:
+      type: object
+      additionalProperties: false
+      required: [id, name, type, platform, config, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/SourceType'
+        platform:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: '#/components/schemas/SourceStatus'
+        lastSyncedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateSourceRequest:
+      type: object
+      additionalProperties: false
+      required: [name, type, platform, config]
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/SourceType'
+        platform:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: '#/components/schemas/SourceStatus'
+
+    UpdateSourceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: '#/components/schemas/SourceStatus'
+
+    RawItem:
+      type: object
+      additionalProperties: false
+      required:
+        [id, sourceId, url, rawMedia, fetchedAt, contentHash, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sourceId:
+          type: string
+          format: uuid
+        externalId:
+          type: string
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+        rawText:
+          type: string
+        rawMedia:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        author:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        fetchedAt:
+          type: string
+          format: date-time
+        languageCode:
+          type: string
+        contentHash:
+          type: string
+          minLength: 16
+          description: Required raw-content deduplication hash.
+        createdAt:
+          type: string
+          format: date-time
+
+    NormalizedItem:
+      type: object
+      additionalProperties: false
+      required:
+        [id, rawItemId, entities, keywords, dedupeKey, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        rawItemId:
+          type: string
+          format: uuid
+        cleanTitle:
+          type: string
+        cleanText:
+          type: string
+        summary:
+          type: string
+        entities:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        keywords:
+          type: array
+          items:
+            type: string
+        dedupeKey:
+          type: string
+          minLength: 16
+          description: Required semantic deduplication key.
+        qualityScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        topicClusterKey:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Topic:
+      type: object
+      additionalProperties: false
+      required: [id, topicDate, title, score, status, clusterPayload, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        topicDate:
+          type: string
+          format: date
+        title:
+          type: string
+        angle:
+          type: string
+        summary:
+          type: string
+        score:
+          type: number
+        status:
+          $ref: '#/components/schemas/TopicStatus'
+        clusterPayload:
+          type: object
+          additionalProperties: true
+        selectedBy:
+          type: string
+          format: uuid
+        selectedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GenerateTopicsRequest:
+      type: object
+      additionalProperties: false
+      required: [date, targetSummaryCount, targetDeepCount]
+      properties:
+        date:
+          type: string
+          format: date
+        targetSummaryCount:
+          type: integer
+          minimum: 1
+        targetDeepCount:
+          type: integer
+          minimum: 1
+
+    UpdateTopicRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        angle:
+          type: string
+        summary:
+          type: string
+        status:
+          $ref: '#/components/schemas/TopicStatus'
+
+    Draft:
+      type: object
+      additionalProperties: false
+      required:
+        [id, topicId, draftType, languageCode, tone, outline, facts, sourceRefs, version, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        topicId:
+          type: string
+          format: uuid
+        draftType:
+          $ref: '#/components/schemas/DraftType'
+        languageCode:
+          type: string
+        tone:
+          type: string
+        title:
+          type: string
+        outline:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        body:
+          type: string
+        facts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sourceRefs:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SourceReference'
+          description: Required before review submission.
+        version:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/DraftStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GenerateDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [topicId, draftType, tone, languageCode]
+      properties:
+        topicId:
+          type: string
+          format: uuid
+        draftType:
+          $ref: '#/components/schemas/DraftType'
+        tone:
+          type: string
+        languageCode:
+          type: string
+
+    UpdateDraftRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        outline:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        body:
+          type: string
+        facts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sourceRefs:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SourceReference'
+        tone:
+          type: string
+
+    RenderDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [template, pageCount, size]
+      properties:
+        template:
+          type: string
+        pageCount:
+          type: integer
+          minimum: 1
+          maximum: 20
+        size:
+          type: string
+          pattern: '^[0-9]{3,5}x[0-9]{3,5}$'
+
+    Asset:
+      type: object
+      additionalProperties: false
+      required: [id, draftId, assetType, storageUrl, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        draftId:
+          type: string
+          format: uuid
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+        pageNo:
+          type: integer
+          minimum: 1
+        storageUrl:
+          type: string
+          format: uri
+        width:
+          type: integer
+        height:
+          type: integer
+        mimeType:
+          type: string
+        templateName:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateAssetRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        templateName:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ChannelVariant:
+      type: object
+      additionalProperties: false
+      required:
+        [id, draftId, platform, hashtags, assetBundle, publishMode, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        draftId:
+          type: string
+          format: uuid
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        title:
+          type: string
+        caption:
+          type: string
+        hashtags:
+          type: array
+          items:
+            type: string
+        coverAssetId:
+          type: string
+          format: uuid
+        assetBundle:
+          type: array
+          items:
+            type: string
+            format: uuid
+        publishMode:
+          type: string
+          enum: [semi_auto, direct_api]
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      description: Platform-specific publish payload. The generic draft body is intentionally not exposed here.
+
+    CreateChannelVariantsRequest:
+      type: object
+      additionalProperties: false
+      required: [platforms]
+      properties:
+        platforms:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PlatformType'
+
+    UpdateChannelVariantRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        caption:
+          type: string
+        hashtags:
+          type: array
+          items:
+            type: string
+        coverAssetId:
+          type: string
+          format: uuid
+        assetBundle:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+
+    ReviewTask:
+      type: object
+      additionalProperties: false
+      required: [id, draftId, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        draftId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ReviewStatus'
+        comments:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        approvedAt:
+          type: string
+          format: date-time
+        rejectedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateReviewTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [draftId]
+      properties:
+        draftId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+
+    ApproveReviewTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [selectedPlatforms]
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+        selectedPlatforms:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PlatformType'
+
+    RejectReviewTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [comments]
+      properties:
+        comments:
+          type: string
+          minLength: 1
+
+    PublishTask:
+      type: object
+      additionalProperties: false
+      required:
+        [id, channelVariantId, platform, status, retryCount, responsePayload, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        channelVariantId:
+          type: string
+          format: uuid
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        status:
+          $ref: '#/components/schemas/PublishStatus'
+        scheduledAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        publishedAt:
+          type: string
+          format: date-time
+        remotePostId:
+          type: string
+        retryCount:
+          type: integer
+          minimum: 0
+        responsePayload:
+          type: object
+          additionalProperties: true
+        errorMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePublishTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [channelVariantId, platform]
+      properties:
+        channelVariantId:
+          type: string
+          format: uuid
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        scheduledAt:
+          type: string
+          format: date-time
+
+    PerformanceMetric:
+      type: object
+      additionalProperties: false
+      required:
+        [id, publishTaskId, platform, views, likes, comments, shares, saves, clicks, capturedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        publishTaskId:
+          type: string
+          format: uuid
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        views:
+          type: integer
+          minimum: 0
+        likes:
+          type: integer
+          minimum: 0
+        comments:
+          type: integer
+          minimum: 0
+        shares:
+          type: integer
+          minimum: 0
+        saves:
+          type: integer
+          minimum: 0
+        clicks:
+          type: integer
+          minimum: 0
+        capturedAt:
+          type: string
+          format: date-time
+          description: Snapshot timestamp. Metrics are append-only over time.
+
+    DashboardOverview:
+      type: object
+      additionalProperties: false
+      required:
+        [rawItemsCount, topicsCount, draftsGenerated, pendingReviews, scheduledPublishes, publishedToday]
+      properties:
+        rawItemsCount:
+          type: integer
+          minimum: 0
+        topicsCount:
+          type: integer
+          minimum: 0
+        draftsGenerated:
+          type: integer
+          minimum: 0
+        pendingReviews:
+          type: integer
+          minimum: 0
+        scheduledPublishes:
+          type: integer
+          minimum: 0
+        publishedToday:
+          type: integer
+          minimum: 0
+
+    JobAcceptedResponse:
+      type: object
+      additionalProperties: false
+      required: [jobId, status]
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued]
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    SourceListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+
+    RawItemListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RawItem'
+
+    NormalizedItemListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NormalizedItem'
+
+    TopicListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+
+    DraftListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Draft'
+
+    AssetListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+
+    ChannelVariantListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelVariant'
+
+    ReviewTaskListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewTask'
+
+    PublishTaskListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublishTask'
+
+    PerformanceMetricListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceMetric'

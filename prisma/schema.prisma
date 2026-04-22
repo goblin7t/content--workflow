@@ -1,0 +1,447 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN   @map("admin")
+  EDITOR  @map("editor")
+  REVIEWER @map("reviewer")
+  OPERATOR @map("operator")
+
+  @@map("user_role")
+}
+
+enum SourceType {
+  RSS        @map("rss")
+  SOCIAL_API @map("social_api")
+  MANUAL     @map("manual")
+
+  @@map("source_type")
+}
+
+enum SourceStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+
+  @@map("source_status")
+}
+
+enum TopicStatus {
+  CANDIDATE @map("candidate")
+  SELECTED  @map("selected")
+  REJECTED  @map("rejected")
+  ARCHIVED  @map("archived")
+
+  @@map("topic_status")
+}
+
+enum DraftType {
+  SUMMARY @map("summary")
+  DEEP    @map("deep")
+
+  @@map("draft_type")
+}
+
+enum DraftStatus {
+  DRAFT     @map("draft")
+  RENDERED  @map("rendered")
+  IN_REVIEW @map("in_review")
+  APPROVED  @map("approved")
+  REJECTED  @map("rejected")
+  SCHEDULED @map("scheduled")
+  PUBLISHED @map("published")
+  FAILED    @map("failed")
+
+  @@map("draft_status")
+}
+
+enum AssetType {
+  COVER     @map("cover")
+  PAGE      @map("page")
+  THUMBNAIL @map("thumbnail")
+
+  @@map("asset_type")
+}
+
+enum PlatformType {
+  XIAOHONGSHU @map("xiaohongshu")
+  DOUYIN      @map("douyin")
+  TIKTOK      @map("tiktok")
+  FACEBOOK    @map("facebook")
+
+  @@map("platform_type")
+}
+
+enum PublishMode {
+  SEMI_AUTO @map("semi_auto")
+  DIRECT_API @map("direct_api")
+
+  @@map("publish_mode")
+}
+
+enum ReviewStatus {
+  PENDING              @map("pending")
+  APPROVED             @map("approved")
+  REJECTED             @map("rejected")
+  REGENERATE_REQUESTED @map("regenerate_requested")
+
+  @@map("review_status")
+}
+
+enum PublishStatus {
+  QUEUED    @map("queued")
+  RUNNING   @map("running")
+  PUBLISHED @map("published")
+  FAILED    @map("failed")
+  CANCELLED @map("cancelled")
+
+  @@map("publish_status")
+}
+
+enum PublishIdempotencyScope {
+  CREATE_TASK @map("create_task")
+  RUN_TASK    @map("run_task")
+
+  @@map("publish_idempotency_scope")
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(120)
+  email     String   @unique @db.VarChar(320)
+  role      UserRole @default(EDITOR)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  selectedTopics  Topic[]      @relation("TopicSelectedBy")
+  createdDrafts   Draft[]      @relation("DraftCreatedBy")
+  updatedDrafts   Draft[]      @relation("DraftUpdatedBy")
+  assignedReviews ReviewTask[] @relation("ReviewAssignedTo")
+
+  @@map("users")
+}
+
+model Source {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String       @db.VarChar(150)
+  type         SourceType
+  platform     String       @db.VarChar(50)
+  config       Json         @default(dbgenerated("'{}'::jsonb"))
+  status       SourceStatus @default(ACTIVE)
+  lastSyncedAt DateTime?    @map("last_synced_at") @db.Timestamptz(6)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  rawItems          RawItem[]
+  draftSourceRefs   DraftSourceReference[]
+
+  @@index([platform], map: "idx_sources_platform")
+  @@index([status], map: "idx_sources_status")
+  @@map("sources")
+}
+
+model RawItem {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId     String    @map("source_id") @db.Uuid
+  externalId   String?   @map("external_id") @db.VarChar(255)
+  url          String    @db.Text
+  title        String?   @db.Text
+  rawText      String?   @map("raw_text") @db.Text
+  rawMedia     Json      @map("raw_media") @default(dbgenerated("'[]'::jsonb"))
+  author       String?   @db.VarChar(255)
+  publishedAt  DateTime? @map("published_at") @db.Timestamptz(6)
+  fetchedAt    DateTime  @default(now()) @map("fetched_at") @db.Timestamptz(6)
+  languageCode String?   @map("language_code") @db.VarChar(16)
+  contentHash  String    @unique(map: "uq_raw_items_content_hash") @map("content_hash") @db.VarChar(128)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  source         Source           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  normalizedItem NormalizedItem?
+
+  @@unique([sourceId, externalId], map: "uq_raw_items_source_external_id")
+  @@index([sourceId], map: "idx_raw_items_source_id")
+  @@index([publishedAt], map: "idx_raw_items_published_at")
+  @@index([fetchedAt], map: "idx_raw_items_fetched_at")
+  @@map("raw_items")
+}
+
+model NormalizedItem {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rawItemId       String    @unique(map: "uq_normalized_items_raw_item_id") @map("raw_item_id") @db.Uuid
+  cleanTitle      String?   @map("clean_title") @db.Text
+  cleanText       String?   @map("clean_text") @db.Text
+  summary         String?   @db.Text
+  entities        Json      @default(dbgenerated("'[]'::jsonb"))
+  keywords        String[]  @default([])
+  dedupeKey       String    @map("dedupe_key") @db.VarChar(128)
+  qualityScore    Float?    @map("quality_score")
+  topicClusterKey String?   @map("topic_cluster_key") @db.VarChar(128)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  rawItem            RawItem                 @relation(fields: [rawItemId], references: [id], onDelete: Cascade)
+  topicItems         TopicItem[]
+  draftSourceRefs    DraftSourceReference[]
+
+  @@index([dedupeKey], map: "idx_normalized_items_dedupe_key")
+  @@index([topicClusterKey], map: "idx_normalized_items_topic_cluster_key")
+  @@map("normalized_items")
+}
+
+model Topic {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topicDate    DateTime    @map("topic_date") @db.Date
+  title        String      @db.Text
+  angle        String?     @db.Text
+  summary      String?     @db.Text
+  score        Float       @default(0)
+  status       TopicStatus @default(CANDIDATE)
+  clusterPayload Json      @map("cluster_payload") @default(dbgenerated("'{}'::jsonb"))
+  selectedById String?     @map("selected_by_id") @db.Uuid
+  selectedAt   DateTime?   @map("selected_at") @db.Timestamptz(6)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  selectedBy User?        @relation("TopicSelectedBy", fields: [selectedById], references: [id])
+  topicItems  TopicItem[]
+  drafts      Draft[]
+  contentJobs ContentJob[]
+
+  @@index([topicDate], map: "idx_topics_topic_date")
+  @@index([status], map: "idx_topics_status")
+  @@index([score], map: "idx_topics_score")
+  @@map("topics")
+}
+
+model TopicItem {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topicId          String   @map("topic_id") @db.Uuid
+  normalizedItemId String   @map("normalized_item_id") @db.Uuid
+  weight           Float    @default(1)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  topic          Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  normalizedItem NormalizedItem @relation(fields: [normalizedItemId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, normalizedItemId], map: "uq_topic_items_topic_normalized")
+  @@index([topicId], map: "idx_topic_items_topic_id")
+  @@map("topic_items")
+}
+
+model Draft {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topicId      String      @map("topic_id") @db.Uuid
+  draftType    DraftType   @map("draft_type")
+  languageCode String      @default("zh-CN") @map("language_code") @db.VarChar(16)
+  tone         String      @default("professional") @db.VarChar(50)
+  title        String?     @db.Text
+  outline      Json        @default(dbgenerated("'[]'::jsonb"))
+  body         String?     @db.Text
+  facts        Json        @default(dbgenerated("'[]'::jsonb"))
+  version      Int         @default(1)
+  status       DraftStatus @default(DRAFT)
+  createdById  String?     @map("created_by_id") @db.Uuid
+  updatedById  String?     @map("updated_by_id") @db.Uuid
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  topic            Topic                   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdBy        User?                   @relation("DraftCreatedBy", fields: [createdById], references: [id])
+  updatedBy        User?                   @relation("DraftUpdatedBy", fields: [updatedById], references: [id])
+  sourceReferences DraftSourceReference[]
+  assets           Asset[]
+  channelVariants  ChannelVariant[]
+  reviewTask       ReviewTask?
+  contentJobs      ContentJob[]
+
+  @@index([topicId], map: "idx_drafts_topic_id")
+  @@index([status], map: "idx_drafts_status")
+  @@index([draftType], map: "idx_drafts_draft_type")
+  @@map("drafts")
+}
+
+model DraftSourceReference {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId          String         @map("draft_id") @db.Uuid
+  sourceId         String         @map("source_id") @db.Uuid
+  normalizedItemId String         @map("normalized_item_id") @db.Uuid
+  title            String         @db.Text
+  url              String         @db.Text
+  publishedAt      DateTime?      @map("published_at") @db.Timestamptz(6)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  draft          Draft          @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  source         Source         @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  normalizedItem NormalizedItem @relation(fields: [normalizedItemId], references: [id], onDelete: Restrict)
+
+  @@unique([draftId, normalizedItemId], map: "uq_draft_source_refs_draft_normalized")
+  @@index([draftId], map: "idx_draft_source_refs_draft_id")
+  @@map("draft_source_references")
+}
+
+model Asset {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId      String    @map("draft_id") @db.Uuid
+  assetType    AssetType @map("asset_type")
+  pageNo       Int?      @map("page_no")
+  storageUrl   String    @map("storage_url") @db.Text
+  width        Int?
+  height       Int?
+  mimeType     String?   @map("mime_type") @db.VarChar(100)
+  templateName String?   @map("template_name") @db.VarChar(120)
+  metadata     Json      @default(dbgenerated("'{}'::jsonb"))
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  draft            Draft                @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  coverForVariants ChannelVariant[]     @relation("ChannelVariantCoverAsset")
+  assetLinks       ChannelVariantAsset[]
+
+  @@index([draftId], map: "idx_assets_draft_id")
+  @@index([assetType], map: "idx_assets_asset_type")
+  @@map("assets")
+}
+
+model ChannelVariant {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId     String       @map("draft_id") @db.Uuid
+  platform    PlatformType
+  title       String?      @db.Text
+  caption     String?      @db.Text
+  hashtags    String[]     @default([])
+  coverAssetId String?     @map("cover_asset_id") @db.Uuid
+  publishMode PublishMode  @default(SEMI_AUTO) @map("publish_mode")
+  status      String       @default("draft") @db.VarChar(30)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  draft        Draft                 @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  coverAsset   Asset?                @relation("ChannelVariantCoverAsset", fields: [coverAssetId], references: [id])
+  assetLinks   ChannelVariantAsset[]
+  publishTasks PublishTask[]
+
+  @@unique([draftId, platform], map: "uq_channel_variants_draft_platform")
+  @@index([platform], map: "idx_channel_variants_platform")
+  @@index([draftId], map: "idx_channel_variants_draft_id")
+  @@map("channel_variants")
+}
+
+model ChannelVariantAsset {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  channelVariantId String   @map("channel_variant_id") @db.Uuid
+  assetId          String   @map("asset_id") @db.Uuid
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  channelVariant ChannelVariant @relation(fields: [channelVariantId], references: [id], onDelete: Cascade)
+  asset          Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([channelVariantId, assetId], map: "uq_channel_variant_assets_variant_asset")
+  @@index([channelVariantId, sortOrder], map: "idx_channel_variant_assets_variant_sort")
+  @@map("channel_variant_assets")
+}
+
+model ReviewTask {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId    String       @unique(map: "uq_review_tasks_draft_id") @map("draft_id") @db.Uuid
+  reviewerId String?      @map("reviewer_id") @db.Uuid
+  status     ReviewStatus @default(PENDING)
+  comments   String?      @db.Text
+  scheduledAt DateTime?   @map("scheduled_at") @db.Timestamptz(6)
+  approvedAt DateTime?    @map("approved_at") @db.Timestamptz(6)
+  rejectedAt DateTime?    @map("rejected_at") @db.Timestamptz(6)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  draft    Draft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ReviewAssignedTo", fields: [reviewerId], references: [id])
+
+  @@index([status], map: "idx_review_tasks_status")
+  @@index([reviewerId], map: "idx_review_tasks_reviewer_id")
+  @@map("review_tasks")
+}
+
+model PublishTask {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  channelVariantId String        @map("channel_variant_id") @db.Uuid
+  platform         PlatformType
+  status           PublishStatus @default(QUEUED)
+  scheduledAt      DateTime?     @map("scheduled_at") @db.Timestamptz(6)
+  startedAt        DateTime?     @map("started_at") @db.Timestamptz(6)
+  publishedAt      DateTime?     @map("published_at") @db.Timestamptz(6)
+  remotePostId     String?       @map("remote_post_id") @db.VarChar(255)
+  retryCount       Int           @default(0) @map("retry_count")
+  responsePayload  Json          @map("response_payload") @default(dbgenerated("'{}'::jsonb"))
+  errorMessage     String?       @map("error_message") @db.Text
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  channelVariant     ChannelVariant            @relation(fields: [channelVariantId], references: [id], onDelete: Cascade)
+  performanceMetrics PerformanceMetric[]
+  idempotencyKeys    PublishIdempotencyKey[]
+
+  @@index([status], map: "idx_publish_tasks_status")
+  @@index([platform], map: "idx_publish_tasks_platform")
+  @@index([scheduledAt], map: "idx_publish_tasks_scheduled_at")
+  @@map("publish_tasks")
+}
+
+model PublishIdempotencyKey {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scope          PublishIdempotencyScope
+  idempotencyKey String                  @map("idempotency_key") @db.VarChar(255)
+  requestHash    String                  @map("request_hash") @db.VarChar(128)
+  publishTaskId  String?                 @map("publish_task_id") @db.Uuid
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  publishTask PublishTask? @relation(fields: [publishTaskId], references: [id], onDelete: SetNull)
+
+  @@unique([scope, idempotencyKey], map: "uq_publish_idempotency_scope_key")
+  @@index([publishTaskId], map: "idx_publish_idempotency_publish_task_id")
+  @@map("publish_idempotency_keys")
+}
+
+model PerformanceMetric {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  publishTaskId String       @map("publish_task_id") @db.Uuid
+  platform      PlatformType
+  views         Int          @default(0)
+  likes         Int          @default(0)
+  comments      Int          @default(0)
+  shares        Int          @default(0)
+  saves         Int          @default(0)
+  clicks        Int          @default(0)
+  capturedAt    DateTime     @default(now()) @map("captured_at") @db.Timestamptz(6)
+
+  publishTask PublishTask @relation(fields: [publishTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([publishTaskId, capturedAt], map: "uq_performance_metrics_publish_task_captured_at")
+  @@index([publishTaskId], map: "idx_performance_metrics_publish_task_id")
+  @@index([platform], map: "idx_performance_metrics_platform")
+  @@index([capturedAt], map: "idx_performance_metrics_captured_at")
+  @@map("performance_metrics")
+}
+
+model ContentJob {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topicId     String?   @map("topic_id") @db.Uuid
+  draftId     String?   @map("draft_id") @db.Uuid
+  jobType     String    @map("job_type") @db.VarChar(50)
+  status      String    @default("queued") @db.VarChar(30)
+  payload     Json      @default(dbgenerated("'{}'::jsonb"))
+  errorMessage String?  @map("error_message") @db.Text
+  startedAt   DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt  DateTime? @map("finished_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  topic Topic? @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  draft Draft? @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([status], map: "idx_content_jobs_status")
+  @@index([jobType], map: "idx_content_jobs_job_type")
+  @@map("content_jobs")
+}
