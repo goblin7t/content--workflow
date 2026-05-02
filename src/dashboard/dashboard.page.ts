@@ -155,6 +155,43 @@ export function renderDashboardPage(): string {
       text-transform: uppercase;
     }
 
+    .feedback {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 16px 18px;
+    }
+
+    .feedback[hidden] {
+      display: none;
+    }
+
+    .feedback-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .feedback-message {
+      line-height: 1.6;
+    }
+
+    .feedback.ok {
+      border-color: rgba(115, 184, 157, 0.3);
+      background: rgba(115, 184, 157, 0.12);
+    }
+
+    .feedback.error {
+      border-color: rgba(200, 111, 67, 0.3);
+      background: rgba(200, 111, 67, 0.12);
+    }
+
+    .feedback.busy {
+      border-color: rgba(232, 184, 73, 0.3);
+      background: rgba(232, 184, 73, 0.12);
+    }
+
     button {
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -169,6 +206,13 @@ export function renderDashboardPage(): string {
     button.primary {
       color: #fffaf0;
       background: var(--ink);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+      transform: none;
+      box-shadow: none;
     }
 
     .grid {
@@ -387,11 +431,106 @@ export function renderDashboardPage(): string {
       margin-top: 16px;
     }
 
+    .control-room {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      margin-top: 16px;
+    }
+
+    .stage-rail {
+      position: sticky;
+      top: 18px;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .stage-nav-header {
+      display: grid;
+      gap: 6px;
+    }
+
+    .stage-nav-header strong {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--clay);
+    }
+
+    .stage-nav-header span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .stage-nav {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stage-nav-btn {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+      border-radius: 20px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .stage-nav-btn.active {
+      border-color: rgba(23, 32, 27, 0.24);
+      background: rgba(23, 32, 27, 0.9);
+      color: #fffaf0;
+      box-shadow: 0 18px 34px rgba(23, 32, 27, 0.18);
+    }
+
+    .stage-nav-btn.active .meta {
+      color: rgba(255, 250, 240, 0.72);
+    }
+
+    .stage-count {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      background: rgba(23, 32, 27, 0.08);
+      color: inherit;
+      white-space: nowrap;
+    }
+
+    .stage-nav-btn.active .stage-count {
+      background: rgba(255, 250, 240, 0.18);
+    }
+
+    .stage-hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.34);
+      border: 1px dashed rgba(23, 32, 27, 0.14);
+    }
+
+    .stage-content {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .stage-panel[hidden] {
+      display: none;
+    }
+
     .workbench {
       display: grid;
       grid-template-columns: 1.05fr 0.95fr;
       gap: 16px;
-      margin-top: 16px;
       align-items: start;
     }
 
@@ -461,11 +600,17 @@ export function renderDashboardPage(): string {
     }
 
     @media (max-width: 980px) {
-      .hero, .main, .split, .workbench { grid-template-columns: 1fr; }
+      .hero, .main, .split, .workbench, .control-room { grid-template-columns: 1fr; }
       .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .pipeline, .platforms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .actions { justify-content: flex-start; }
+      .stage-rail {
+        position: static;
+      }
+      .stage-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 560px) {
@@ -473,6 +618,7 @@ export function renderDashboardPage(): string {
       .filters,
       .metrics, .pipeline, .platforms { grid-template-columns: 1fr; }
       .metric { min-height: 110px; }
+      .stage-nav { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -567,79 +713,93 @@ export function renderDashboardPage(): string {
 
     <section class="card filter-summary" id="filterSummary"></section>
     <section class="card result-summary" id="resultSummary"></section>
+    <section class="card feedback" id="feedback" hidden></section>
 
     <section class="grid metrics" id="metrics"></section>
 
-    <section class="grid main">
-      <article class="card panel">
-        <h2>业务管线</h2>
-        <div class="pipeline" id="pipeline"></div>
-      </article>
+    <section class="control-room">
+      <aside class="card stage-rail">
+        <div class="stage-nav-header">
+          <strong>Workflow Control</strong>
+          <span>左侧选阶段，右侧只保留当前工作区，让推进动作和状态变化更聚焦。</span>
+        </div>
+        <div class="stage-nav" id="stageNav"></div>
+        <div class="stage-hint" id="stageHint"></div>
+      </aside>
 
-      <article class="card panel">
-        <h2>发布渠道</h2>
-        <div class="platforms" id="platforms"></div>
-      </article>
-    </section>
+      <div class="stage-content">
+        <section class="grid main stage-panel" data-stage-panel="overview">
+          <article class="card panel">
+            <h2>业务管线</h2>
+            <div class="pipeline" id="pipeline"></div>
+          </article>
 
-    <section class="workbench">
-      <article class="card panel">
-        <h2>选题工作区</h2>
-        <div class="list" id="topics"></div>
-      </article>
+          <article class="card panel">
+            <h2>发布渠道</h2>
+            <div class="platforms" id="platforms"></div>
+          </article>
+        </section>
 
-      <article class="card panel">
-        <h2>选题详情</h2>
-        <div class="detail-stack" id="topicDetail"></div>
-      </article>
-    </section>
+        <section class="workbench stage-panel" data-stage-panel="topics">
+          <article class="card panel">
+            <h2>选题工作区</h2>
+            <div class="list" id="topics"></div>
+          </article>
 
-    <section class="workbench">
-      <article class="card panel">
-        <h2>草稿工作区</h2>
-        <div class="list" id="drafts"></div>
-      </article>
+          <article class="card panel">
+            <h2>选题详情</h2>
+            <div class="detail-stack" id="topicDetail"></div>
+          </article>
+        </section>
 
-      <article class="card panel">
-        <h2>草稿详情</h2>
-        <div class="detail-stack" id="draftDetail"></div>
-      </article>
-    </section>
+        <section class="workbench stage-panel" data-stage-panel="drafts">
+          <article class="card panel">
+            <h2>草稿工作区</h2>
+            <div class="list" id="drafts"></div>
+          </article>
 
-    <section class="workbench">
-      <article class="card panel">
-        <h2>审核工作区</h2>
-        <div class="list" id="reviews"></div>
-      </article>
+          <article class="card panel">
+            <h2>草稿详情</h2>
+            <div class="detail-stack" id="draftDetail"></div>
+          </article>
+        </section>
 
-      <article class="card panel">
-        <h2>审核详情</h2>
-        <div class="detail-stack" id="reviewDetail"></div>
-      </article>
-    </section>
+        <section class="workbench stage-panel" data-stage-panel="reviews">
+          <article class="card panel">
+            <h2>审核工作区</h2>
+            <div class="list" id="reviews"></div>
+          </article>
 
-    <section class="workbench">
-      <article class="card panel">
-        <h2>发布工作区</h2>
-        <div class="list" id="publishWorkbench"></div>
-      </article>
+          <article class="card panel">
+            <h2>审核详情</h2>
+            <div class="detail-stack" id="reviewDetail"></div>
+          </article>
+        </section>
 
-      <article class="card panel">
-        <h2>发布详情</h2>
-        <div class="detail-stack" id="publishDetail"></div>
-      </article>
-    </section>
+        <section class="workbench stage-panel" data-stage-panel="publish">
+          <article class="card panel">
+            <h2>发布工作区</h2>
+            <div class="list" id="publishWorkbench"></div>
+          </article>
 
-    <section class="split">
-      <article class="card panel">
-        <h2>信息来源</h2>
-        <div class="list" id="sources"></div>
-      </article>
+          <article class="card panel">
+            <h2>发布详情</h2>
+            <div class="detail-stack" id="publishDetail"></div>
+          </article>
+        </section>
 
-      <article class="card panel">
-        <h2>最近发布筛选</h2>
-        <div class="list" id="publishes"></div>
-      </article>
+        <section class="split stage-panel" data-stage-panel="sources">
+          <article class="card panel">
+            <h2>信息来源</h2>
+            <div class="list" id="sources"></div>
+          </article>
+
+          <article class="card panel">
+            <h2>最近发布筛选</h2>
+            <div class="list" id="publishes"></div>
+          </article>
+        </section>
+      </div>
     </section>
 
     <p class="status" id="status">正在读取工作流数据...</p>
@@ -651,6 +811,9 @@ export function renderDashboardPage(): string {
     const status = $('status');
     const filterSummary = $('filterSummary');
     const resultSummary = $('resultSummary');
+    const feedback = $('feedback');
+    const stageNav = $('stageNav');
+    const stageHint = $('stageHint');
     const topicDetail = $('topicDetail');
     const draftDetail = $('draftDetail');
     const reviewDetail = $('reviewDetail');
@@ -669,6 +832,18 @@ export function renderDashboardPage(): string {
     let selectedDraftId = '';
     let selectedReviewId = '';
     let selectedPublishKey = '';
+    let activeStage = 'overview';
+    let isBusy = false;
+    let busyActionKey = '';
+    let lastLoadedAt = '';
+    const stageConfig = [
+      { key: 'overview', label: '总览', note: '先看全局吞吐、平台分布和流程健康度。' },
+      { key: 'topics', label: '选题', note: '从候选选题开始推进，决定今天要写什么。' },
+      { key: 'drafts', label: '草稿', note: '围绕草稿补素材、提审或重生成。' },
+      { key: 'reviews', label: '审核', note: '聚焦人工判断，把可发内容往前推进。' },
+      { key: 'publish', label: '发布', note: '创建、执行、重试或取消发布任务。' },
+      { key: 'sources', label: '来源', note: '检查输入来源和最近发布筛选结果。' }
+    ];
 
     function esc(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -697,6 +872,100 @@ export function renderDashboardPage(): string {
       return '<div class="empty">' + esc(text) + '</div>';
     }
 
+    function showFeedback(tone, title, message) {
+      feedback.hidden = false;
+      feedback.className = 'card feedback ' + tone;
+      feedback.innerHTML =
+        '<div class="feedback-title">' + esc(title) + '</div>' +
+        '<div class="feedback-message">' + esc(message) + '</div>';
+    }
+
+    function clearFeedback() {
+      feedback.hidden = true;
+      feedback.className = 'card feedback';
+      feedback.innerHTML = '';
+    }
+
+    function setStatus(message) {
+      status.textContent = message;
+    }
+
+    function getStatusText() {
+      if (isBusy) {
+        return '处理中：' + busyActionKey;
+      }
+
+      if (lastLoadedAt) {
+        return '已更新：' + lastLoadedAt;
+      }
+
+      return '正在读取工作流数据...';
+    }
+
+    function syncControlState() {
+      $('refreshBtn').disabled = isBusy;
+      $('demoBtn').disabled = isBusy;
+      $('applyFiltersBtn').disabled = isBusy;
+      $('resetFiltersBtn').disabled = isBusy;
+      Object.values(filterFields).forEach((element) => {
+        if (element) {
+          element.disabled = isBusy;
+        }
+      });
+      setStatus(getStatusText());
+    }
+
+    function setBusy(actionKey, message) {
+      isBusy = true;
+      busyActionKey = actionKey;
+      showFeedback('busy', '处理中', message);
+      syncControlState();
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    }
+
+    function clearBusy() {
+      isBusy = false;
+      busyActionKey = '';
+      syncControlState();
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    }
+
+    function isActionBusy(actionKey) {
+      return isBusy && busyActionKey === actionKey;
+    }
+
+    function actionLabel(actionKey, label) {
+      return isActionBusy(actionKey) ? label + '...' : label;
+    }
+
+    async function describeError(response, fallback) {
+      let details = '';
+
+      try {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await response.json();
+          if (Array.isArray(data.message)) {
+            details = data.message.join('；');
+          } else if (typeof data.message === 'string') {
+            details = data.message;
+          } else if (typeof data.error === 'string') {
+            details = data.error;
+          }
+        } else {
+          details = (await response.text()).trim();
+        }
+      } catch {
+        details = '';
+      }
+
+      return details ? fallback + '：' + details : fallback + '：HTTP ' + response.status;
+    }
+
     function renderRows(items, formatter, emptyText) {
       return items.length ? items.map(formatter).join('') : empty(emptyText);
     }
@@ -722,11 +991,65 @@ export function renderDashboardPage(): string {
 
     function applyFilters(pushState = true) {
       const query = buildQueryString();
-      const nextUrl = query ? location.pathname + '?' + query : location.pathname;
+      const hash = '#' + activeStage;
+      const nextUrl = (query ? location.pathname + '?' + query : location.pathname) + hash;
       if (pushState) {
         history.replaceState(null, '', nextUrl);
       }
       return query;
+    }
+
+    function resolveStage(rawStage) {
+      return stageConfig.some((stage) => stage.key === rawStage) ? rawStage : 'overview';
+    }
+
+    function syncStageFromLocation() {
+      activeStage = resolveStage((location.hash || '').replace(/^#/, ''));
+    }
+
+    function setActiveStage(stageKey, pushState = true) {
+      activeStage = resolveStage(stageKey);
+      if (pushState) {
+        const query = buildQueryString();
+        const nextUrl = (query ? location.pathname + '?' + query : location.pathname) + '#' + activeStage;
+        history.replaceState(null, '', nextUrl);
+      }
+      if (latestVisualization) {
+        render(latestVisualization);
+      } else {
+        renderStagePanels();
+      }
+    }
+
+    function renderStagePanels() {
+      document.querySelectorAll('[data-stage-panel]').forEach((panel) => {
+        panel.hidden = panel.getAttribute('data-stage-panel') !== activeStage;
+      });
+    }
+
+    function stageCounts(data) {
+      return {
+        overview: data.platformBreakdown.length,
+        topics: data.topics.length,
+        drafts: data.drafts.length,
+        reviews: data.reviews.length,
+        publish: data.publishes.length + data.publishCandidates.length,
+        sources: data.sources.length,
+      };
+    }
+
+    function renderStageNav(data) {
+      const counts = stageCounts(data);
+      stageNav.innerHTML = stageConfig.map((stage) =>
+        '<button class="stage-nav-btn' + (stage.key === activeStage ? ' active' : '') + '" type="button" data-stage-key="' + esc(stage.key) + '" aria-label="切换到' + esc(stage.label) + '">' +
+          '<div><div class="title">' + esc(stage.label) + '</div><div class="meta">' + esc(stage.note) + '</div></div>' +
+          '<span class="stage-count">' + esc(counts[stage.key]) + '</span>' +
+        '</button>'
+      ).join('');
+
+      const current = stageConfig.find((stage) => stage.key === activeStage) || stageConfig[0];
+      stageHint.textContent = current.note;
+      renderStagePanels();
     }
 
     function renderFilterSummary() {
@@ -836,8 +1159,8 @@ export function renderDashboardPage(): string {
         '<article class="detail-card">' +
           '<div class="detail-kicker">Quick Actions</div>' +
           '<div class="detail-actions">' +
-            '<button class="primary" type="button" data-topic-action="select" data-topic-id="' + esc(topic.id) + '"' + (canSelect ? '' : ' disabled') + '>选择选题</button>' +
-            '<button type="button" data-topic-action="reject" data-topic-id="' + esc(topic.id) + '"' + (canReject ? '' : ' disabled') + '>拒绝选题</button>' +
+            '<button class="primary" type="button" data-topic-action="select" data-topic-id="' + esc(topic.id) + '"' + (canSelect && !isBusy ? '' : ' disabled') + '>' + actionLabel('topic:select', '选择选题') + '</button>' +
+            '<button type="button" data-topic-action="reject" data-topic-id="' + esc(topic.id) + '"' + (canReject && !isBusy ? '' : ' disabled') + '>' + actionLabel('topic:reject', '拒绝选题') + '</button>' +
           '</div>' +
           '<div class="meta">先在这里推进选题状态，后续再把草稿生成、审核与发布动作并入同一套工作台。</div>' +
         '</article>';
@@ -867,9 +1190,9 @@ export function renderDashboardPage(): string {
         '<article class="detail-card">' +
           '<div class="detail-kicker">Quick Actions</div>' +
           '<div class="detail-actions">' +
-            '<button class="primary" type="button" data-draft-action="render" data-draft-id="' + esc(draft.id) + '">渲染素材</button>' +
-            '<button type="button" data-draft-action="submit-review" data-draft-id="' + esc(draft.id) + '"' + (canSubmitReview ? '' : ' disabled') + '>提交审核</button>' +
-            '<button type="button" data-draft-action="regenerate" data-draft-id="' + esc(draft.id) + '">重新生成</button>' +
+            '<button class="primary" type="button" data-draft-action="render" data-draft-id="' + esc(draft.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('draft:render', '渲染素材') + '</button>' +
+            '<button type="button" data-draft-action="submit-review" data-draft-id="' + esc(draft.id) + '"' + (canSubmitReview && !isBusy ? '' : ' disabled') + '>' + actionLabel('draft:submit-review', '提交审核') + '</button>' +
+            '<button type="button" data-draft-action="regenerate" data-draft-id="' + esc(draft.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('draft:regenerate', '重新生成') + '</button>' +
           '</div>' +
           '<div class="detail-note">当前先接入 3 个高频动作。渲染后会生成标准素材，提交审核后进入 review 阶段，重新生成会把版本推进一轮。</div>' +
         '</article>';
@@ -899,9 +1222,9 @@ export function renderDashboardPage(): string {
         '<article class="detail-card">' +
           '<div class="detail-kicker">Quick Actions</div>' +
           '<div class="detail-actions">' +
-            '<button class="primary" type="button" data-review-action="approve" data-review-id="' + esc(review.id) + '"' + (canApprove ? '' : ' disabled') + '>审核通过</button>' +
-            '<button type="button" data-review-action="reject" data-review-id="' + esc(review.id) + '">驳回审核</button>' +
-            '<button type="button" data-review-action="request-regenerate" data-review-id="' + esc(review.id) + '">要求重生成</button>' +
+            '<button class="primary" type="button" data-review-action="approve" data-review-id="' + esc(review.id) + '"' + (canApprove && !isBusy ? '' : ' disabled') + '>' + actionLabel('review:approve', '审核通过') + '</button>' +
+            '<button type="button" data-review-action="reject" data-review-id="' + esc(review.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('review:reject', '驳回审核') + '</button>' +
+            '<button type="button" data-review-action="request-regenerate" data-review-id="' + esc(review.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('review:request-regenerate', '要求重生成') + '</button>' +
           '</div>' +
           '<div class="detail-note">通过会默认带上该草稿已有的全部平台版本；驳回和要求重生成会要求输入一条简短备注。</div>' +
         '</article>';
@@ -932,7 +1255,7 @@ export function renderDashboardPage(): string {
           '<article class="detail-card">' +
             '<div class="detail-kicker">Quick Actions</div>' +
             '<div class="detail-actions">' +
-              '<button class="primary" type="button" data-publish-action="create" data-channel-variant-id="' + esc(candidate.channelVariantId) + '" data-platform="' + esc(candidate.platform) + '">创建发布任务</button>' +
+              '<button class="primary" type="button" data-publish-action="create" data-channel-variant-id="' + esc(candidate.channelVariantId) + '" data-platform="' + esc(candidate.platform) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('publish:create', '创建发布任务') + '</button>' +
             '</div>' +
             '<div class="detail-note">这里会按当前平台版本创建一条 queued publish task，随后就能继续执行发布、取消或重试。</div>' +
           '</article>';
@@ -961,9 +1284,9 @@ export function renderDashboardPage(): string {
         '<article class="detail-card">' +
           '<div class="detail-kicker">Quick Actions</div>' +
           '<div class="detail-actions">' +
-            '<button class="primary" type="button" data-publish-action="run" data-publish-task-id="' + esc(task.id) + '"' + (canRun ? '' : ' disabled') + '>执行发布</button>' +
-            '<button type="button" data-publish-action="retry" data-publish-task-id="' + esc(task.id) + '"' + (canRetry ? '' : ' disabled') + '>重试发布</button>' +
-            '<button type="button" data-publish-action="cancel" data-publish-task-id="' + esc(task.id) + '"' + (canCancel ? '' : ' disabled') + '>取消发布</button>' +
+            '<button class="primary" type="button" data-publish-action="run" data-publish-task-id="' + esc(task.id) + '"' + (canRun && !isBusy ? '' : ' disabled') + '>' + actionLabel('publish:run', '执行发布') + '</button>' +
+            '<button type="button" data-publish-action="retry" data-publish-task-id="' + esc(task.id) + '"' + (canRetry && !isBusy ? '' : ' disabled') + '>' + actionLabel('publish:retry', '重试发布') + '</button>' +
+            '<button type="button" data-publish-action="cancel" data-publish-task-id="' + esc(task.id) + '"' + (canCancel && !isBusy ? '' : ' disabled') + '>' + actionLabel('publish:cancel', '取消发布') + '</button>' +
           '</div>' +
           '<div class="detail-note">run 会带唯一的 Idempotency-Key，retry 只对 failed 生效，cancel 只对 queued 生效。</div>' +
         '</article>';
@@ -975,6 +1298,7 @@ export function renderDashboardPage(): string {
       syncSelectedDraft(data);
       syncSelectedReview(data);
       syncSelectedPublish(data);
+      renderStageNav(data);
       const overview = data.overview;
       const totals = data.totals;
       resultSummary.innerHTML = [
@@ -1055,34 +1379,45 @@ export function renderDashboardPage(): string {
     }
 
     async function load() {
-      status.textContent = '正在读取工作流数据...';
+      setStatus('正在读取工作流数据...');
       const query = applyFilters(false);
       renderFilterSummary();
       const response = await fetch(apiRoot + '/dashboard/visualization' + (query ? '?' + query : ''));
-      if (!response.ok) throw new Error('读取失败：HTTP ' + response.status);
+      if (!response.ok) throw new Error(await describeError(response, '读取工作流数据失败'));
       render(await response.json());
-      status.textContent = '已更新：' + new Date().toLocaleString();
+      lastLoadedAt = new Date().toLocaleString();
+      syncControlState();
     }
 
     async function runDemo() {
-      status.textContent = '正在运行 Demo 工作流...';
-      const response = await fetch(apiRoot + '/demo/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resetStore: true })
-      });
-      if (!response.ok) throw new Error('Demo 运行失败：HTTP ' + response.status);
-      await load();
+      setBusy('demo:run', '正在运行 Demo 工作流，页面会在完成后自动刷新。');
+      try {
+        const response = await fetch(apiRoot + '/demo/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resetStore: true })
+        });
+        if (!response.ok) throw new Error(await describeError(response, 'Demo 运行失败'));
+        await load();
+        showFeedback('ok', '操作完成', 'Demo 工作流已跑完，工作台数据已经刷新。');
+      } finally {
+        clearBusy();
+      }
     }
 
     async function mutateTopic(topicId, action) {
-      status.textContent = '正在执行选题操作...';
-      const response = await fetch(apiRoot + '/topics/' + encodeURIComponent(topicId) + '/' + action, {
-        method: 'POST'
-      });
-      if (!response.ok) throw new Error('选题操作失败：HTTP ' + response.status);
-      selectedTopicId = topicId;
-      await load();
+      setBusy('topic:' + action, '正在更新选题状态...');
+      try {
+        const response = await fetch(apiRoot + '/topics/' + encodeURIComponent(topicId) + '/' + action, {
+          method: 'POST'
+        });
+        if (!response.ok) throw new Error(await describeError(response, '选题操作失败'));
+        selectedTopicId = topicId;
+        await load();
+        showFeedback('ok', '操作完成', action === 'select' ? '选题已设为 selected。' : '选题已设为 rejected。');
+      } finally {
+        clearBusy();
+      }
     }
 
     function getRenderPreset(draft) {
@@ -1092,70 +1427,96 @@ export function renderDashboardPage(): string {
     }
 
     async function mutateDraft(draftId, action) {
-      status.textContent = '正在执行草稿操作...';
+      setBusy('draft:' + action, '正在执行草稿操作...');
       const draft = latestVisualization ? latestVisualization.drafts.find((item) => item.id === draftId) : null;
       let response;
 
-      if (action === 'render') {
-        const preset = getRenderPreset(draft || { draftType: 'summary' });
-        response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/render', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(preset)
-        });
-      } else if (action === 'submit-review') {
-        response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/submit-review', {
-          method: 'POST'
-        });
-      } else if (action === 'regenerate') {
-        response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/regenerate', {
-          method: 'POST'
-        });
-      } else {
-        throw new Error('未知草稿操作');
-      }
+      try {
+        if (action === 'render') {
+          const preset = getRenderPreset(draft || { draftType: 'summary' });
+          response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/render', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(preset)
+          });
+        } else if (action === 'submit-review') {
+          response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/submit-review', {
+            method: 'POST'
+          });
+        } else if (action === 'regenerate') {
+          response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/regenerate', {
+            method: 'POST'
+          });
+        } else {
+          throw new Error('未知草稿操作');
+        }
 
-      if (!response.ok) throw new Error('草稿操作失败：HTTP ' + response.status);
-      selectedDraftId = draftId;
-      await load();
+        if (!response.ok) throw new Error(await describeError(response, '草稿操作失败'));
+        selectedDraftId = draftId;
+        await load();
+        const messages = {
+          render: '草稿素材已重新渲染。',
+          'submit-review': '草稿已提交审核。',
+          regenerate: '草稿已触发重生成。'
+        };
+        showFeedback('ok', '操作完成', messages[action] || '草稿操作已完成。');
+      } finally {
+        clearBusy();
+      }
     }
 
     async function mutateReview(reviewId, action) {
-      status.textContent = '正在执行审核操作...';
+      setBusy('review:' + action, '正在执行审核操作...');
       const review = latestVisualization ? latestVisualization.reviews.find((item) => item.id === reviewId) : null;
       let response;
 
-      if (action === 'approve') {
-        response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            selectedPlatforms: review ? review.availablePlatforms : []
-          })
-        });
-      } else if (action === 'reject') {
-        const comments = window.prompt('请输入驳回原因：', '需要补充说明后再提交');
-        if (comments === null) return;
-        response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/reject', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ comments })
-        });
-      } else if (action === 'request-regenerate') {
-        const comments = window.prompt('请输入重生成要求：', '请补充更清晰的结构与论据');
-        if (comments === null) return;
-        response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/request-regenerate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ comments })
-        });
-      } else {
-        throw new Error('未知审核操作');
-      }
+      try {
+        if (action === 'approve') {
+          response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              selectedPlatforms: review ? review.availablePlatforms : []
+            })
+          });
+        } else if (action === 'reject') {
+          const comments = window.prompt('请输入驳回原因：', '需要补充说明后再提交');
+          if (comments === null) {
+            clearBusy();
+            return;
+          }
+          response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comments })
+          });
+        } else if (action === 'request-regenerate') {
+          const comments = window.prompt('请输入重生成要求：', '请补充更清晰的结构与论据');
+          if (comments === null) {
+            clearBusy();
+            return;
+          }
+          response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/request-regenerate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comments })
+          });
+        } else {
+          throw new Error('未知审核操作');
+        }
 
-      if (!response.ok) throw new Error('审核操作失败：HTTP ' + response.status);
-      selectedReviewId = reviewId;
-      await load();
+        if (!response.ok) throw new Error(await describeError(response, '审核操作失败'));
+        selectedReviewId = reviewId;
+        await load();
+        const messages = {
+          approve: '审核已通过。',
+          reject: '审核已驳回。',
+          'request-regenerate': '已要求重生成。'
+        };
+        showFeedback('ok', '操作完成', messages[action] || '审核操作已完成。');
+      } finally {
+        clearBusy();
+      }
     }
 
     function buildIdempotencyKey(prefix, id) {
@@ -1163,50 +1524,69 @@ export function renderDashboardPage(): string {
     }
 
     async function mutatePublish(action, payload) {
-      status.textContent = '正在执行发布操作...';
+      setBusy('publish:' + action, '正在执行发布操作...');
       let response;
 
-      if (action === 'create') {
-        response = await fetch(apiRoot + '/publish-tasks', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Idempotency-Key': buildIdempotencyKey('dashboard-create', payload.channelVariantId)
-          },
-          body: JSON.stringify({
-            channelVariantId: payload.channelVariantId,
-            platform: payload.platform
-          })
-        });
-      } else if (action === 'run') {
-        response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/run', {
-          method: 'POST',
-          headers: {
-            'Idempotency-Key': buildIdempotencyKey('dashboard-run', payload.publishTaskId)
-          }
-        });
-      } else if (action === 'retry') {
-        response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/retry', {
-          method: 'POST'
-        });
-      } else if (action === 'cancel') {
-        response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/cancel', {
-          method: 'POST'
-        });
-      } else {
-        throw new Error('未知发布操作');
-      }
+      try {
+        if (action === 'create') {
+          response = await fetch(apiRoot + '/publish-tasks', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Idempotency-Key': buildIdempotencyKey('dashboard-create', payload.channelVariantId)
+            },
+            body: JSON.stringify({
+              channelVariantId: payload.channelVariantId,
+              platform: payload.platform
+            })
+          });
+        } else if (action === 'run') {
+          response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/run', {
+            method: 'POST',
+            headers: {
+              'Idempotency-Key': buildIdempotencyKey('dashboard-run', payload.publishTaskId)
+            }
+          });
+        } else if (action === 'retry') {
+          response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/retry', {
+            method: 'POST'
+          });
+        } else if (action === 'cancel') {
+          response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/cancel', {
+            method: 'POST'
+          });
+        } else {
+          throw new Error('未知发布操作');
+        }
 
-      if (!response.ok) throw new Error('发布操作失败：HTTP ' + response.status);
-      const result = await response.json();
-      selectedPublishKey = 'task:' + result.id;
-      await load();
+        if (!response.ok) throw new Error(await describeError(response, '发布操作失败'));
+        const result = await response.json();
+        selectedPublishKey = 'task:' + result.id;
+        await load();
+        const messages = {
+          create: '发布任务已创建。',
+          run: '发布任务已执行。',
+          retry: '发布任务已重新排队。',
+          cancel: '发布任务已取消。'
+        };
+        showFeedback('ok', '操作完成', messages[action] || '发布操作已完成。');
+      } finally {
+        clearBusy();
+      }
     }
 
     $('applyFiltersBtn').addEventListener('click', () => {
       applyFilters(true);
       renderFilterSummary();
-      load().catch((error) => status.textContent = error.message);
+      load().catch((error) => {
+        showFeedback('error', '读取失败', error.message);
+        setStatus(error.message);
+      });
+    });
+    stageNav.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-stage-key]');
+      if (!button || isBusy) return;
+      setActiveStage(button.getAttribute('data-stage-key') || 'overview', true);
     });
     $('resetFiltersBtn').addEventListener('click', () => {
       Object.values(filterFields).forEach((element) => {
@@ -1214,10 +1594,23 @@ export function renderDashboardPage(): string {
       });
       applyFilters(true);
       renderFilterSummary();
-      load().catch((error) => status.textContent = error.message);
+      load().catch((error) => {
+        showFeedback('error', '读取失败', error.message);
+        setStatus(error.message);
+      });
     });
-    $('refreshBtn').addEventListener('click', () => load().catch((error) => status.textContent = error.message));
-    $('demoBtn').addEventListener('click', () => runDemo().catch((error) => status.textContent = error.message));
+    $('refreshBtn').addEventListener('click', () => {
+      clearFeedback();
+      load().catch((error) => {
+        showFeedback('error', '读取失败', error.message);
+        setStatus(error.message);
+      });
+    });
+    $('demoBtn').addEventListener('click', () => runDemo().catch((error) => {
+      showFeedback('error', '操作失败', error.message);
+      setStatus(error.message);
+      clearBusy();
+    }));
     filterSummary.addEventListener('click', (event) => {
       const button = event.target.closest('[data-clear-filter]');
       if (!button) return;
@@ -1227,7 +1620,10 @@ export function renderDashboardPage(): string {
       field.value = '';
       applyFilters(true);
       renderFilterSummary();
-      load().catch((error) => status.textContent = error.message);
+      load().catch((error) => {
+        showFeedback('error', '读取失败', error.message);
+        setStatus(error.message);
+      });
     });
     $('platforms').addEventListener('click', (event) => {
       const button = event.target.closest('[data-platform-card]');
@@ -1235,7 +1631,10 @@ export function renderDashboardPage(): string {
       filterFields.platform.value = button.getAttribute('data-platform-card') || '';
       applyFilters(true);
       renderFilterSummary();
-      load().catch((error) => status.textContent = error.message);
+      load().catch((error) => {
+        showFeedback('error', '读取失败', error.message);
+        setStatus(error.message);
+      });
     });
     $('drafts').addEventListener('click', (event) => {
       const button = event.target.closest('[data-draft-id]');
@@ -1268,7 +1667,10 @@ export function renderDashboardPage(): string {
       filterFields.publishStatus.value = button.getAttribute('data-publish-status') || '';
       applyFilters(true);
       renderFilterSummary();
-      load().catch((error) => status.textContent = error.message);
+      load().catch((error) => {
+        showFeedback('error', '读取失败', error.message);
+        setStatus(error.message);
+      });
     });
     $('topics').addEventListener('click', (event) => {
       const button = event.target.closest('[data-topic-id]');
@@ -1284,7 +1686,10 @@ export function renderDashboardPage(): string {
       const topicId = button.getAttribute('data-topic-id');
       const action = button.getAttribute('data-topic-action');
       if (!topicId || !action) return;
-      mutateTopic(topicId, action).catch((error) => status.textContent = error.message);
+      mutateTopic(topicId, action).catch((error) => {
+        showFeedback('error', '操作失败', error.message);
+        setStatus(error.message);
+      });
     });
     draftDetail.addEventListener('click', (event) => {
       const button = event.target.closest('[data-draft-action]');
@@ -1292,7 +1697,10 @@ export function renderDashboardPage(): string {
       const draftId = button.getAttribute('data-draft-id');
       const action = button.getAttribute('data-draft-action');
       if (!draftId || !action) return;
-      mutateDraft(draftId, action).catch((error) => status.textContent = error.message);
+      mutateDraft(draftId, action).catch((error) => {
+        showFeedback('error', '操作失败', error.message);
+        setStatus(error.message);
+      });
     });
     reviewDetail.addEventListener('click', (event) => {
       const button = event.target.closest('[data-review-action]');
@@ -1300,7 +1708,10 @@ export function renderDashboardPage(): string {
       const reviewId = button.getAttribute('data-review-id');
       const action = button.getAttribute('data-review-action');
       if (!reviewId || !action) return;
-      mutateReview(reviewId, action).catch((error) => status.textContent = error.message);
+      mutateReview(reviewId, action).catch((error) => {
+        showFeedback('error', '操作失败', error.message);
+        setStatus(error.message);
+      });
     });
     publishDetail.addEventListener('click', (event) => {
       const button = event.target.closest('[data-publish-action]');
@@ -1311,17 +1722,36 @@ export function renderDashboardPage(): string {
         const channelVariantId = button.getAttribute('data-channel-variant-id');
         const platform = button.getAttribute('data-platform');
         if (!channelVariantId || !platform) return;
-        mutatePublish(action, { channelVariantId, platform }).catch((error) => status.textContent = error.message);
+        mutatePublish(action, { channelVariantId, platform }).catch((error) => {
+          showFeedback('error', '操作失败', error.message);
+          setStatus(error.message);
+        });
         return;
       }
 
       const publishTaskId = button.getAttribute('data-publish-task-id');
       if (!publishTaskId) return;
-      mutatePublish(action, { publishTaskId }).catch((error) => status.textContent = error.message);
+      mutatePublish(action, { publishTaskId }).catch((error) => {
+        showFeedback('error', '操作失败', error.message);
+        setStatus(error.message);
+      });
     });
     syncFiltersFromLocation();
+    syncStageFromLocation();
     renderFilterSummary();
-    load().catch((error) => status.textContent = error.message);
+    syncControlState();
+    renderStagePanels();
+    window.addEventListener('hashchange', () => {
+      syncStageFromLocation();
+      renderStagePanels();
+      if (latestVisualization) {
+        renderStageNav(latestVisualization);
+      }
+    });
+    load().catch((error) => {
+      showFeedback('error', '读取失败', error.message);
+      setStatus(error.message);
+    });
   </script>
 </body>
 </html>`;

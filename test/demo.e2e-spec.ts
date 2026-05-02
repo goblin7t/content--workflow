@@ -130,6 +130,9 @@ describe('DemoController (e2e)', () => {
     expect(page.text).toContain('/dashboard/visualization');
     expect(page.text).toContain('platformFilter');
     expect(page.text).toContain('applyFiltersBtn');
+    expect(page.text).toContain('feedback');
+    expect(page.text).toContain('stageNav');
+    expect(page.text).toContain('Workflow Control');
     expect(page.text).toContain('topicDetail');
     expect(page.text).toContain('选择选题');
     expect(page.text).toContain('draftDetail');
