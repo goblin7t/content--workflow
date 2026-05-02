@@ -83,7 +83,10 @@ describe('DemoController (e2e)', () => {
   it('serves dashboard visualization data and page', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/demo/run')
-      .send({ resetStore: true })
+      .send({
+        resetStore: true,
+        topicDate: '2025-02-14',
+      })
       .expect(201);
 
     const visualization = await request(app.getHttpServer())
@@ -94,9 +97,29 @@ describe('DemoController (e2e)', () => {
     expect(visualization.body.totals.normalizedItemsCount).toBe(4);
     expect(visualization.body.sources).toHaveLength(4);
     expect(visualization.body.drafts).toHaveLength(4);
+    expect(visualization.body.reviews).toHaveLength(4);
     expect(visualization.body.publishes).toHaveLength(16);
+    expect(visualization.body.publishCandidates).toHaveLength(0);
     expect(visualization.body.platformBreakdown).toHaveLength(4);
     expect(visualization.body.platformBreakdown.every((item: any) => item.published === 4)).toBe(true);
+
+    const filteredVisualization = await request(app.getHttpServer())
+      .get('/api/v1/dashboard/visualization')
+      .query({
+        date: '2025-02-14',
+        platform: 'tiktok',
+        publishStatus: 'published',
+      })
+      .expect(200);
+
+    expect(filteredVisualization.body.sources).toHaveLength(1);
+    expect(filteredVisualization.body.sources[0].platform).toBe('tiktok');
+    expect(filteredVisualization.body.drafts).toHaveLength(1);
+    expect(filteredVisualization.body.reviews).toHaveLength(1);
+    expect(filteredVisualization.body.publishes).toHaveLength(1);
+    expect(filteredVisualization.body.publishes[0].platform).toBe('tiktok');
+    expect(filteredVisualization.body.platformBreakdown).toHaveLength(1);
+    expect(filteredVisualization.body.platformBreakdown[0].platform).toBe('tiktok');
 
     const page = await request(app.getHttpServer())
       .get('/api/v1/dashboard')
@@ -105,5 +128,16 @@ describe('DemoController (e2e)', () => {
     expect(page.text).toContain('内容工作流');
     expect(page.text).toContain('可视化看板');
     expect(page.text).toContain('/dashboard/visualization');
+    expect(page.text).toContain('platformFilter');
+    expect(page.text).toContain('applyFiltersBtn');
+    expect(page.text).toContain('topicDetail');
+    expect(page.text).toContain('选择选题');
+    expect(page.text).toContain('draftDetail');
+    expect(page.text).toContain('渲染素材');
+    expect(page.text).toContain('reviewDetail');
+    expect(page.text).toContain('审核通过');
+    expect(page.text).toContain('publishDetail');
+    expect(page.text).toContain('创建发布任务');
+    expect(page.text).toContain('执行发布');
   });
 });

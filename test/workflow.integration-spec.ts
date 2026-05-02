@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
+import { PublishStatus } from '../src/common/enums/workflow.enums';
 import { DashboardService } from '../src/dashboard/dashboard.service';
 import { DemoService } from '../src/demo/demo.service';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -81,9 +82,46 @@ describe('Workflow services (integration)', () => {
     expect(visualization.totals.totalViews).toBe(1600);
     expect(visualization.sources).toHaveLength(4);
     expect(visualization.topics).toHaveLength(4);
+    expect(visualization.topics[0].normalizedItemCount).toBeGreaterThan(0);
     expect(visualization.drafts).toHaveLength(4);
+    expect(visualization.reviews).toHaveLength(4);
     expect(visualization.publishes).toHaveLength(16);
+    expect(visualization.publishes[0].channelVariantId).toBeTruthy();
+    expect(visualization.publishes[0].draftType).toBeTruthy();
+    expect(visualization.publishCandidates).toHaveLength(0);
     expect(visualization.platformBreakdown).toHaveLength(4);
     expect(visualization.platformBreakdown.every((item) => item.published === 4)).toBe(true);
+  });
+
+  it('applies dashboard filters across the workflow lineage', async () => {
+    await demoService.runDemo({
+      resetStore: true,
+      topicDate: '2025-02-14',
+    });
+
+    const visualization = await dashboardService.getVisualization({
+      date: '2025-02-14',
+      platform: 'tiktok',
+      publishStatus: PublishStatus.PUBLISHED,
+    });
+
+    expect(visualization.overview.rawItemsCount).toBe(1);
+    expect(visualization.overview.topicsCount).toBe(1);
+    expect(visualization.overview.draftsGenerated).toBe(1);
+    expect(visualization.totals.normalizedItemsCount).toBe(1);
+    expect(visualization.totals.reviewsCount).toBe(1);
+    expect(visualization.totals.publishTasksCount).toBe(1);
+    expect(visualization.totals.totalViews).toBe(100);
+    expect(visualization.sources).toHaveLength(1);
+    expect(visualization.sources[0].platform).toBe('tiktok');
+    expect(visualization.topics).toHaveLength(1);
+    expect(visualization.drafts).toHaveLength(1);
+    expect(visualization.reviews).toHaveLength(1);
+    expect(visualization.publishes).toHaveLength(1);
+    expect(visualization.publishes[0].platform).toBe('tiktok');
+    expect(visualization.publishCandidates).toHaveLength(0);
+    expect(visualization.platformBreakdown).toHaveLength(1);
+    expect(visualization.platformBreakdown[0].platform).toBe('tiktok');
+    expect(visualization.platformBreakdown[0].published).toBe(1);
   });
 });

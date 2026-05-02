@@ -77,6 +77,84 @@ export function renderDashboardPage(): string {
       justify-content: flex-end;
     }
 
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.6);
+      font: inherit;
+    }
+
+    .filter-summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 16px 18px;
+    }
+
+    .filter-summary strong {
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .summary-chip .chip-close {
+      font-size: 11px;
+      line-height: 1;
+      opacity: 0.72;
+    }
+
+    .result-summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 16px 18px;
+    }
+
+    .result-summary strong {
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
     button {
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -206,10 +284,23 @@ export function renderDashboardPage(): string {
     }
 
     .platform {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
       padding: 14px;
       border-radius: 22px;
       background: rgba(255, 255, 255, 0.42);
       border: 1px solid var(--line);
+    }
+
+    .platform:hover,
+    .platform:focus-visible,
+    .interactive-row:hover,
+    .interactive-row:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
     }
 
     .platform-name {
@@ -231,6 +322,26 @@ export function renderDashboardPage(): string {
       gap: 12px;
       padding: 13px 0;
       border-top: 1px solid var(--line);
+    }
+
+    .interactive-row {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
+      border: 0;
+      background: transparent;
+      border-radius: 16px;
+      padding-left: 12px;
+      padding-right: 12px;
+      margin-left: -12px;
+      margin-right: -12px;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .interactive-row:hover,
+    .interactive-row:focus-visible {
+      background: rgba(255, 255, 255, 0.46);
     }
 
     .row:first-child { border-top: 0; }
@@ -276,13 +387,82 @@ export function renderDashboardPage(): string {
       margin-top: 16px;
     }
 
+    .workbench {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+      margin-top: 16px;
+      align-items: start;
+    }
+
+    .topic-row.active {
+      background: rgba(115, 184, 157, 0.18);
+      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+    }
+
+    .draft-row.active {
+      background: rgba(232, 184, 73, 0.18);
+      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+    }
+
+    .review-row.active {
+      background: rgba(102, 143, 200, 0.18);
+      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+    }
+
+    .publish-row.active {
+      background: rgba(196, 116, 88, 0.18);
+      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+    }
+
+    .detail-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-card {
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .detail-kicker {
+      color: var(--clay);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .detail-title {
+      margin: 8px 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .detail-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 980px) {
-      .hero, .main, .split { grid-template-columns: 1fr; }
+      .hero, .main, .split, .workbench { grid-template-columns: 1fr; }
+      .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .pipeline, .platforms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .actions { justify-content: flex-start; }
@@ -290,6 +470,7 @@ export function renderDashboardPage(): string {
 
     @media (max-width: 560px) {
       .shell { width: min(100% - 20px, 1180px); padding-top: 22px; }
+      .filters,
       .metrics, .pipeline, .platforms { grid-template-columns: 1fr; }
       .metric { min-height: 110px; }
     }
@@ -309,6 +490,84 @@ export function renderDashboardPage(): string {
       </div>
     </section>
 
+    <section class="card filters">
+      <div class="field">
+        <label for="dateFilter">日期</label>
+        <input id="dateFilter" type="date" />
+      </div>
+      <div class="field">
+        <label for="platformFilter">平台</label>
+        <select id="platformFilter">
+          <option value="">全部平台</option>
+          <option value="rss">rss</option>
+          <option value="xiaohongshu">xiaohongshu</option>
+          <option value="douyin">douyin</option>
+          <option value="tiktok">tiktok</option>
+          <option value="facebook">facebook</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="draftStatusFilter">草稿状态</label>
+        <select id="draftStatusFilter">
+          <option value="">全部草稿</option>
+          <option value="draft">draft</option>
+          <option value="rendered">rendered</option>
+          <option value="in_review">in_review</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
+          <option value="scheduled">scheduled</option>
+          <option value="published">published</option>
+          <option value="failed">failed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="publishStatusFilter">发布状态</label>
+        <select id="publishStatusFilter">
+          <option value="">全部发布任务</option>
+          <option value="queued">queued</option>
+          <option value="running">running</option>
+          <option value="published">published</option>
+          <option value="failed">failed</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sourceStatusFilter">来源状态</label>
+        <select id="sourceStatusFilter">
+          <option value="">全部来源</option>
+          <option value="active">active</option>
+          <option value="disabled">disabled</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="topicStatusFilter">选题状态</label>
+        <select id="topicStatusFilter">
+          <option value="">全部选题</option>
+          <option value="candidate">candidate</option>
+          <option value="selected">selected</option>
+          <option value="rejected">rejected</option>
+          <option value="archived">archived</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="reviewStatusFilter">审核状态</label>
+        <select id="reviewStatusFilter">
+          <option value="">全部审核任务</option>
+          <option value="pending">pending</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
+          <option value="regenerate_requested">regenerate_requested</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button class="primary" id="applyFiltersBtn">应用筛选</button>
+        <button id="resetFiltersBtn">清空筛选</button>
+      </div>
+    </section>
+
+    <section class="card filter-summary" id="filterSummary"></section>
+    <section class="card result-summary" id="resultSummary"></section>
+
     <section class="grid metrics" id="metrics"></section>
 
     <section class="grid main">
@@ -323,15 +582,51 @@ export function renderDashboardPage(): string {
       </article>
     </section>
 
-    <section class="split">
+    <section class="workbench">
       <article class="card panel">
-        <h2>今日选题</h2>
+        <h2>选题工作区</h2>
         <div class="list" id="topics"></div>
       </article>
 
       <article class="card panel">
-        <h2>图文草稿</h2>
+        <h2>选题详情</h2>
+        <div class="detail-stack" id="topicDetail"></div>
+      </article>
+    </section>
+
+    <section class="workbench">
+      <article class="card panel">
+        <h2>草稿工作区</h2>
         <div class="list" id="drafts"></div>
+      </article>
+
+      <article class="card panel">
+        <h2>草稿详情</h2>
+        <div class="detail-stack" id="draftDetail"></div>
+      </article>
+    </section>
+
+    <section class="workbench">
+      <article class="card panel">
+        <h2>审核工作区</h2>
+        <div class="list" id="reviews"></div>
+      </article>
+
+      <article class="card panel">
+        <h2>审核详情</h2>
+        <div class="detail-stack" id="reviewDetail"></div>
+      </article>
+    </section>
+
+    <section class="workbench">
+      <article class="card panel">
+        <h2>发布工作区</h2>
+        <div class="list" id="publishWorkbench"></div>
+      </article>
+
+      <article class="card panel">
+        <h2>发布详情</h2>
+        <div class="detail-stack" id="publishDetail"></div>
       </article>
     </section>
 
@@ -342,7 +637,7 @@ export function renderDashboardPage(): string {
       </article>
 
       <article class="card panel">
-        <h2>最近发布</h2>
+        <h2>最近发布筛选</h2>
         <div class="list" id="publishes"></div>
       </article>
     </section>
@@ -354,6 +649,26 @@ export function renderDashboardPage(): string {
     const apiRoot = location.pathname.startsWith('/api/v1') ? '/api/v1' : '';
     const $ = (id) => document.getElementById(id);
     const status = $('status');
+    const filterSummary = $('filterSummary');
+    const resultSummary = $('resultSummary');
+    const topicDetail = $('topicDetail');
+    const draftDetail = $('draftDetail');
+    const reviewDetail = $('reviewDetail');
+    const publishDetail = $('publishDetail');
+    const filterFields = {
+      date: $('dateFilter'),
+      platform: $('platformFilter'),
+      draftStatus: $('draftStatusFilter'),
+      publishStatus: $('publishStatusFilter'),
+      sourceStatus: $('sourceStatusFilter'),
+      topicStatus: $('topicStatusFilter'),
+      reviewStatus: $('reviewStatusFilter')
+    };
+    let latestVisualization = null;
+    let selectedTopicId = '';
+    let selectedDraftId = '';
+    let selectedReviewId = '';
+    let selectedPublishKey = '';
 
     function esc(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -373,6 +688,11 @@ export function renderDashboardPage(): string {
       return '<span class="pill ' + tone + '">' + esc(value) + '</span>';
     }
 
+    function filterChip(key, label, value) {
+      return '<button class="pill warn summary-chip" type="button" data-clear-filter="' + esc(key) + '" aria-label="清除筛选 ' + esc(label) + '">' +
+        '<span>' + esc(label + '：' + value) + '</span><span class="chip-close">×</span></button>';
+    }
+
     function empty(text) {
       return '<div class="empty">' + esc(text) + '</div>';
     }
@@ -381,9 +701,292 @@ export function renderDashboardPage(): string {
       return items.length ? items.map(formatter).join('') : empty(emptyText);
     }
 
+    function syncFiltersFromLocation() {
+      const search = new URLSearchParams(location.search);
+      Object.entries(filterFields).forEach(([key, element]) => {
+        if (!element) return;
+        element.value = search.get(key) || '';
+      });
+    }
+
+    function buildQueryString() {
+      const search = new URLSearchParams();
+      Object.entries(filterFields).forEach(([key, element]) => {
+        const value = element && element.value ? element.value.trim() : '';
+        if (value) {
+          search.set(key, value);
+        }
+      });
+      return search.toString();
+    }
+
+    function applyFilters(pushState = true) {
+      const query = buildQueryString();
+      const nextUrl = query ? location.pathname + '?' + query : location.pathname;
+      if (pushState) {
+        history.replaceState(null, '', nextUrl);
+      }
+      return query;
+    }
+
+    function renderFilterSummary() {
+      const labels = {
+        date: '日期',
+        platform: '平台',
+        draftStatus: '草稿',
+        publishStatus: '发布',
+        sourceStatus: '来源',
+        topicStatus: '选题',
+        reviewStatus: '审核'
+      };
+      const active = Object.entries(filterFields)
+        .map(([key, element]) => {
+          const value = element && element.value ? element.value.trim() : '';
+          return value ? filterChip(key, labels[key], value) : '';
+        })
+        .filter(Boolean);
+
+      filterSummary.innerHTML = active.length
+        ? '<strong>当前筛选</strong>' + active.join('')
+        : '<strong>当前筛选</strong>' + pill('未应用筛选', 'ok');
+    }
+
+    function syncSelectedTopic(data) {
+      const stillExists = data.topics.some((topic) => topic.id === selectedTopicId);
+      if (!stillExists) {
+        selectedTopicId = data.topics[0] ? data.topics[0].id : '';
+      }
+    }
+
+    function getSelectedTopic(data) {
+      return data.topics.find((topic) => topic.id === selectedTopicId) || null;
+    }
+
+    function syncSelectedDraft(data) {
+      const stillExists = data.drafts.some((draft) => draft.id === selectedDraftId);
+      if (!stillExists) {
+        selectedDraftId = data.drafts[0] ? data.drafts[0].id : '';
+      }
+    }
+
+    function getSelectedDraft(data) {
+      return data.drafts.find((draft) => draft.id === selectedDraftId) || null;
+    }
+
+    function syncSelectedReview(data) {
+      const stillExists = data.reviews.some((review) => review.id === selectedReviewId);
+      if (!stillExists) {
+        selectedReviewId = data.reviews[0] ? data.reviews[0].id : '';
+      }
+    }
+
+    function getSelectedReview(data) {
+      return data.reviews.find((review) => review.id === selectedReviewId) || null;
+    }
+
+    function listPublishEntries(data) {
+      const tasks = data.publishes.map((task) => ({
+        key: 'task:' + task.id,
+        kind: 'task',
+        item: task
+      }));
+      const candidates = data.publishCandidates.map((candidate) => ({
+        key: 'candidate:' + candidate.channelVariantId,
+        kind: 'candidate',
+        item: candidate
+      }));
+      return tasks.concat(candidates);
+    }
+
+    function syncSelectedPublish(data) {
+      const entries = listPublishEntries(data);
+      const stillExists = entries.some((entry) => entry.key === selectedPublishKey);
+      if (!stillExists) {
+        selectedPublishKey = entries[0] ? entries[0].key : '';
+      }
+    }
+
+    function getSelectedPublish(data) {
+      return listPublishEntries(data).find((entry) => entry.key === selectedPublishKey) || null;
+    }
+
+    function renderTopicDetail(data) {
+      const topic = getSelectedTopic(data);
+      if (!topic) {
+        topicDetail.innerHTML = empty('当前筛选下没有选题可操作。');
+        return;
+      }
+
+      const canSelect = topic.status !== 'selected';
+      const canReject = topic.status !== 'rejected';
+      topicDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Topic Workbench</div>' +
+          '<div class="detail-title">' + esc(topic.title) + '</div>' +
+          '<div class="meta">' + esc(topic.angle || '暂无选题角度') + '</div>' +
+          '<div class="meta">' + esc(topic.summary || '暂无选题摘要') + '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('状态 ' + topic.status, topic.status === 'selected' ? 'ok' : topic.status === 'rejected' ? 'hot' : 'warn') +
+            pill('热度 ' + topic.score, 'warn') +
+            pill('候选素材 ' + topic.normalizedItemCount, 'ok') +
+          '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Quick Actions</div>' +
+          '<div class="detail-actions">' +
+            '<button class="primary" type="button" data-topic-action="select" data-topic-id="' + esc(topic.id) + '"' + (canSelect ? '' : ' disabled') + '>选择选题</button>' +
+            '<button type="button" data-topic-action="reject" data-topic-id="' + esc(topic.id) + '"' + (canReject ? '' : ' disabled') + '>拒绝选题</button>' +
+          '</div>' +
+          '<div class="meta">先在这里推进选题状态，后续再把草稿生成、审核与发布动作并入同一套工作台。</div>' +
+        '</article>';
+    }
+
+    function renderDraftDetail(data) {
+      const draft = getSelectedDraft(data);
+      if (!draft) {
+        draftDetail.innerHTML = empty('当前筛选下没有草稿可操作。');
+        return;
+      }
+
+      const canSubmitReview = draft.reviewStatus !== 'approved' && draft.reviewStatus !== 'pending';
+      draftDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Draft Workbench</div>' +
+          '<div class="detail-title">' + esc(draft.title) + '</div>' +
+          '<div class="meta">' + esc(draft.draftType) + ' · 状态 ' + esc(draft.status) + '</div>' +
+          '<div class="meta">引用 ' + esc(draft.sourceRefCount) + ' · 素材 ' + esc(draft.assetCount) + ' · 平台版本 ' + esc(draft.variantCount) + '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('草稿 ' + draft.status, draft.status === 'approved' ? 'ok' : 'warn') +
+            pill('审核 ' + (draft.reviewStatus || 'not_submitted'), draft.reviewStatus === 'approved' ? 'ok' : draft.reviewStatus ? 'warn' : '') +
+          '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Quick Actions</div>' +
+          '<div class="detail-actions">' +
+            '<button class="primary" type="button" data-draft-action="render" data-draft-id="' + esc(draft.id) + '">渲染素材</button>' +
+            '<button type="button" data-draft-action="submit-review" data-draft-id="' + esc(draft.id) + '"' + (canSubmitReview ? '' : ' disabled') + '>提交审核</button>' +
+            '<button type="button" data-draft-action="regenerate" data-draft-id="' + esc(draft.id) + '">重新生成</button>' +
+          '</div>' +
+          '<div class="detail-note">当前先接入 3 个高频动作。渲染后会生成标准素材，提交审核后进入 review 阶段，重新生成会把版本推进一轮。</div>' +
+        '</article>';
+    }
+
+    function renderReviewDetail(data) {
+      const review = getSelectedReview(data);
+      if (!review) {
+        reviewDetail.innerHTML = empty('当前筛选下没有审核任务可操作。');
+        return;
+      }
+
+      const canApprove = review.availablePlatforms.length > 0;
+      reviewDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Review Workbench</div>' +
+          '<div class="detail-title">' + esc(review.draftTitle) + '</div>' +
+          '<div class="meta">' + esc(review.draftType) + ' · 审核状态 ' + esc(review.status) + '</div>' +
+          '<div class="meta">可发布平台：' + esc(review.availablePlatforms.join(', ') || '暂无平台版本') + '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('状态 ' + review.status, review.status === 'approved' ? 'ok' : review.status === 'rejected' ? 'hot' : 'warn') +
+            (review.scheduledAt ? pill('已排期', 'ok') : pill('未排期', 'warn')) +
+          '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Quick Actions</div>' +
+          '<div class="detail-actions">' +
+            '<button class="primary" type="button" data-review-action="approve" data-review-id="' + esc(review.id) + '"' + (canApprove ? '' : ' disabled') + '>审核通过</button>' +
+            '<button type="button" data-review-action="reject" data-review-id="' + esc(review.id) + '">驳回审核</button>' +
+            '<button type="button" data-review-action="request-regenerate" data-review-id="' + esc(review.id) + '">要求重生成</button>' +
+          '</div>' +
+          '<div class="detail-note">通过会默认带上该草稿已有的全部平台版本；驳回和要求重生成会要求输入一条简短备注。</div>' +
+        '</article>';
+    }
+
+    function renderPublishDetail(data) {
+      const selected = getSelectedPublish(data);
+      if (!selected) {
+        publishDetail.innerHTML = empty('当前筛选下没有发布任务，也没有待创建的发布候选。');
+        return;
+      }
+
+      if (selected.kind === 'candidate') {
+        const candidate = selected.item;
+        publishDetail.innerHTML =
+          '<article class="detail-card">' +
+            '<div class="detail-kicker">Publish Workbench</div>' +
+            '<div class="detail-title">' + esc(candidate.draftTitle) + '</div>' +
+            '<div class="meta">' + esc(candidate.draftType) + ' · 平台 ' + esc(candidate.platform) + '</div>' +
+            '<div class="meta">当前还没有发布任务，这里可以直接补建。</div>' +
+          '</article>' +
+          '<article class="detail-card">' +
+            '<div class="detail-actions">' +
+              pill('待创建', 'warn') +
+              pill('版本状态 ' + candidate.variantStatus, 'ok') +
+            '</div>' +
+          '</article>' +
+          '<article class="detail-card">' +
+            '<div class="detail-kicker">Quick Actions</div>' +
+            '<div class="detail-actions">' +
+              '<button class="primary" type="button" data-publish-action="create" data-channel-variant-id="' + esc(candidate.channelVariantId) + '" data-platform="' + esc(candidate.platform) + '">创建发布任务</button>' +
+            '</div>' +
+            '<div class="detail-note">这里会按当前平台版本创建一条 queued publish task，随后就能继续执行发布、取消或重试。</div>' +
+          '</article>';
+        return;
+      }
+
+      const task = selected.item;
+      const canRun = task.status === 'queued';
+      const canRetry = task.status === 'failed';
+      const canCancel = task.status === 'queued';
+      publishDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Publish Workbench</div>' +
+          '<div class="detail-title">' + esc(task.draftTitle || task.id) + '</div>' +
+          '<div class="meta">' + esc(task.draftType) + ' · 平台 ' + esc(task.platform) + ' · 状态 ' + esc(task.status) + '</div>' +
+          '<div class="meta">' + esc(task.remotePostId || '尚未生成远端发布 ID') + '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('状态 ' + task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') +
+            pill('重试 ' + task.retryCount, task.retryCount ? 'warn' : 'ok') +
+            (task.scheduledAt ? pill('已排期', 'ok') : pill('立即发布', 'warn')) +
+          '</div>' +
+          (task.errorMessage ? '<div class="meta">失败原因：' + esc(task.errorMessage) + '</div>' : '') +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Quick Actions</div>' +
+          '<div class="detail-actions">' +
+            '<button class="primary" type="button" data-publish-action="run" data-publish-task-id="' + esc(task.id) + '"' + (canRun ? '' : ' disabled') + '>执行发布</button>' +
+            '<button type="button" data-publish-action="retry" data-publish-task-id="' + esc(task.id) + '"' + (canRetry ? '' : ' disabled') + '>重试发布</button>' +
+            '<button type="button" data-publish-action="cancel" data-publish-task-id="' + esc(task.id) + '"' + (canCancel ? '' : ' disabled') + '>取消发布</button>' +
+          '</div>' +
+          '<div class="detail-note">run 会带唯一的 Idempotency-Key，retry 只对 failed 生效，cancel 只对 queued 生效。</div>' +
+        '</article>';
+    }
+
     function render(data) {
+      latestVisualization = data;
+      syncSelectedTopic(data);
+      syncSelectedDraft(data);
+      syncSelectedReview(data);
+      syncSelectedPublish(data);
       const overview = data.overview;
       const totals = data.totals;
+      resultSummary.innerHTML = [
+        '<strong>筛选结果</strong>',
+        pill('来源 ' + data.sources.length, 'ok'),
+        pill('选题 ' + data.topics.length, 'ok'),
+        pill('草稿 ' + data.drafts.length, 'ok'),
+        pill('审核 ' + totals.reviewsCount, 'ok'),
+        pill('发布 ' + data.publishes.length, 'ok'),
+        pill('指标 ' + totals.totalViews + ' views', 'warn')
+      ].join('');
+
       $('metrics').innerHTML = [
         metric('原始采集', overview.rawItemsCount),
         metric('去重归一', totals.normalizedItemsCount),
@@ -406,18 +1009,39 @@ export function renderDashboardPage(): string {
       ).join('');
 
       $('platforms').innerHTML = data.platformBreakdown.map((item) =>
-        '<div class="platform"><div class="platform-name"><span>' + esc(item.platform) + '</span>' + pill(item.published + '/' + item.publishTasks, item.failed ? 'hot' : 'ok') + '</div><div class="meta">浏览 ' + esc(item.views) + ' · 点赞 ' + esc(item.likes) + ' · 评论 ' + esc(item.comments) + '</div><div class="bar"><div class="fill" style="width:' + (item.publishTasks ? Math.round((item.published / item.publishTasks) * 100) : 0) + '%"></div></div></div>'
+        '<button class="platform" type="button" data-platform-card="' + esc(item.platform) + '" aria-label="筛选平台 ' + esc(item.platform) + '"><div class="platform-name"><span>' + esc(item.platform) + '</span>' + pill(item.published + '/' + item.publishTasks, item.failed ? 'hot' : 'ok') + '</div><div class="meta">浏览 ' + esc(item.views) + ' · 点赞 ' + esc(item.likes) + ' · 评论 ' + esc(item.comments) + '</div><div class="bar"><div class="fill" style="width:' + (item.publishTasks ? Math.round((item.published / item.publishTasks) * 100) : 0) + '%"></div></div></button>'
       ).join('');
 
       $('topics').innerHTML = renderRows(data.topics, (topic) =>
-        '<div class="row"><div><div class="title">' + esc(topic.title) + '</div><div class="meta">' + esc(topic.angle || '暂无角度') + ' · 热度 ' + esc(topic.score) + '</div></div>' + pill(topic.status, topic.status === 'selected' ? 'ok' : 'warn') + '</div>',
+        '<button class="row interactive-row topic-row' + (topic.id === selectedTopicId ? ' active' : '') + '" type="button" data-topic-id="' + esc(topic.id) + '" aria-label="查看选题 ' + esc(topic.title) + '"><div><div class="title">' + esc(topic.title) + '</div><div class="meta">' + esc(topic.angle || '暂无角度') + ' · 热度 ' + esc(topic.score) + ' · 候选素材 ' + esc(topic.normalizedItemCount) + '</div></div>' + pill(topic.status, topic.status === 'selected' ? 'ok' : 'warn') + '</button>',
         '还没有选题数据。点击“运行 Demo”生成一组样例。'
       );
+      renderTopicDetail(data);
 
       $('drafts').innerHTML = renderRows(data.drafts, (draft) =>
-        '<div class="row"><div><div class="title">' + esc(draft.title) + '</div><div class="meta">' + esc(draft.draftType) + ' · 素材 ' + esc(draft.assetCount) + ' · 平台版本 ' + esc(draft.variantCount) + ' · 引用 ' + esc(draft.sourceRefCount) + '</div></div>' + pill(draft.reviewStatus || draft.status, draft.reviewStatus === 'approved' ? 'ok' : 'warn') + '</div>',
+        '<button class="row interactive-row draft-row' + (draft.id === selectedDraftId ? ' active' : '') + '" type="button" data-draft-id="' + esc(draft.id) + '" aria-label="查看草稿 ' + esc(draft.title) + '"><div><div class="title">' + esc(draft.title) + '</div><div class="meta">' + esc(draft.draftType) + ' · 素材 ' + esc(draft.assetCount) + ' · 平台版本 ' + esc(draft.variantCount) + ' · 引用 ' + esc(draft.sourceRefCount) + '</div></div>' + pill(draft.reviewStatus || draft.status, draft.reviewStatus === 'approved' ? 'ok' : 'warn') + '</button>',
         '还没有图文草稿。'
       );
+      renderDraftDetail(data);
+
+      $('reviews').innerHTML = renderRows(data.reviews, (review) =>
+        '<button class="row interactive-row review-row' + (review.id === selectedReviewId ? ' active' : '') + '" type="button" data-review-id="' + esc(review.id) + '" aria-label="查看审核任务 ' + esc(review.draftTitle) + '"><div><div class="title">' + esc(review.draftTitle) + '</div><div class="meta">' + esc(review.draftType) + ' · 平台 ' + esc(review.availablePlatforms.join(', ') || 'none') + '</div></div>' + pill(review.status, review.status === 'approved' ? 'ok' : review.status === 'rejected' ? 'hot' : 'warn') + '</button>',
+        '还没有审核任务。'
+      );
+      renderReviewDetail(data);
+
+      $('publishWorkbench').innerHTML = renderRows(listPublishEntries(data), (entry) => {
+        if (entry.kind === 'candidate') {
+          const candidate = entry.item;
+          return '<button class="row interactive-row publish-row' + (entry.key === selectedPublishKey ? ' active' : '') + '" type="button" data-publish-key="' + esc(entry.key) + '" aria-label="查看待创建发布 ' + esc(candidate.draftTitle) + '"><div><div class="title">' + esc(candidate.draftTitle) + '</div><div class="meta">' + esc(candidate.draftType) + ' · ' + esc(candidate.platform) + ' · 还未建任务</div></div>' + pill('待创建', 'warn') + '</button>';
+        }
+
+        const task = entry.item;
+        return '<button class="row interactive-row publish-row' + (entry.key === selectedPublishKey ? ' active' : '') + '" type="button" data-publish-key="' + esc(entry.key) + '" aria-label="查看发布任务 ' + esc(task.draftTitle || task.id) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(task.platform) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>';
+      }, filterFields.publishStatus.value
+        ? '当前发布状态筛选下没有发布任务。清空发布状态后，也会重新看到待创建候选。'
+        : '还没有发布任务，也没有待创建候选。');
+      renderPublishDetail(data);
 
       $('sources').innerHTML = renderRows(data.sources, (source) =>
         '<div class="row"><div><div class="title">' + esc(source.name) + '</div><div class="meta">' + esc(source.type) + ' · ' + esc(source.platform) + '</div></div>' + pill(source.status, source.status === 'active' ? 'ok' : '') + '</div>',
@@ -425,14 +1049,16 @@ export function renderDashboardPage(): string {
       );
 
       $('publishes').innerHTML = renderRows(data.publishes.slice(0, 10), (task) =>
-        '<div class="row"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(task.platform) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</div>',
+        '<button class="row interactive-row" type="button" data-publish-platform="' + esc(task.platform) + '" data-publish-status="' + esc(task.status) + '" aria-label="筛选发布 ' + esc(task.platform + ' ' + task.status) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(task.platform) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>',
         '还没有发布记录。'
       );
     }
 
     async function load() {
       status.textContent = '正在读取工作流数据...';
-      const response = await fetch(apiRoot + '/dashboard/visualization');
+      const query = applyFilters(false);
+      renderFilterSummary();
+      const response = await fetch(apiRoot + '/dashboard/visualization' + (query ? '?' + query : ''));
       if (!response.ok) throw new Error('读取失败：HTTP ' + response.status);
       render(await response.json());
       status.textContent = '已更新：' + new Date().toLocaleString();
@@ -449,8 +1075,252 @@ export function renderDashboardPage(): string {
       await load();
     }
 
+    async function mutateTopic(topicId, action) {
+      status.textContent = '正在执行选题操作...';
+      const response = await fetch(apiRoot + '/topics/' + encodeURIComponent(topicId) + '/' + action, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('选题操作失败：HTTP ' + response.status);
+      selectedTopicId = topicId;
+      await load();
+    }
+
+    function getRenderPreset(draft) {
+      return draft.draftType === 'deep'
+        ? { template: 'deep-dive-carousel', pageCount: 8, size: '1080x1440' }
+        : { template: 'daily-summary-card', pageCount: 6, size: '1080x1440' };
+    }
+
+    async function mutateDraft(draftId, action) {
+      status.textContent = '正在执行草稿操作...';
+      const draft = latestVisualization ? latestVisualization.drafts.find((item) => item.id === draftId) : null;
+      let response;
+
+      if (action === 'render') {
+        const preset = getRenderPreset(draft || { draftType: 'summary' });
+        response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(preset)
+        });
+      } else if (action === 'submit-review') {
+        response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/submit-review', {
+          method: 'POST'
+        });
+      } else if (action === 'regenerate') {
+        response = await fetch(apiRoot + '/drafts/' + encodeURIComponent(draftId) + '/regenerate', {
+          method: 'POST'
+        });
+      } else {
+        throw new Error('未知草稿操作');
+      }
+
+      if (!response.ok) throw new Error('草稿操作失败：HTTP ' + response.status);
+      selectedDraftId = draftId;
+      await load();
+    }
+
+    async function mutateReview(reviewId, action) {
+      status.textContent = '正在执行审核操作...';
+      const review = latestVisualization ? latestVisualization.reviews.find((item) => item.id === reviewId) : null;
+      let response;
+
+      if (action === 'approve') {
+        response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selectedPlatforms: review ? review.availablePlatforms : []
+          })
+        });
+      } else if (action === 'reject') {
+        const comments = window.prompt('请输入驳回原因：', '需要补充说明后再提交');
+        if (comments === null) return;
+        response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/reject', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comments })
+        });
+      } else if (action === 'request-regenerate') {
+        const comments = window.prompt('请输入重生成要求：', '请补充更清晰的结构与论据');
+        if (comments === null) return;
+        response = await fetch(apiRoot + '/review-tasks/' + encodeURIComponent(reviewId) + '/request-regenerate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comments })
+        });
+      } else {
+        throw new Error('未知审核操作');
+      }
+
+      if (!response.ok) throw new Error('审核操作失败：HTTP ' + response.status);
+      selectedReviewId = reviewId;
+      await load();
+    }
+
+    function buildIdempotencyKey(prefix, id) {
+      return prefix + '-' + id + '-' + Date.now();
+    }
+
+    async function mutatePublish(action, payload) {
+      status.textContent = '正在执行发布操作...';
+      let response;
+
+      if (action === 'create') {
+        response = await fetch(apiRoot + '/publish-tasks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': buildIdempotencyKey('dashboard-create', payload.channelVariantId)
+          },
+          body: JSON.stringify({
+            channelVariantId: payload.channelVariantId,
+            platform: payload.platform
+          })
+        });
+      } else if (action === 'run') {
+        response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/run', {
+          method: 'POST',
+          headers: {
+            'Idempotency-Key': buildIdempotencyKey('dashboard-run', payload.publishTaskId)
+          }
+        });
+      } else if (action === 'retry') {
+        response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/retry', {
+          method: 'POST'
+        });
+      } else if (action === 'cancel') {
+        response = await fetch(apiRoot + '/publish-tasks/' + encodeURIComponent(payload.publishTaskId) + '/cancel', {
+          method: 'POST'
+        });
+      } else {
+        throw new Error('未知发布操作');
+      }
+
+      if (!response.ok) throw new Error('发布操作失败：HTTP ' + response.status);
+      const result = await response.json();
+      selectedPublishKey = 'task:' + result.id;
+      await load();
+    }
+
+    $('applyFiltersBtn').addEventListener('click', () => {
+      applyFilters(true);
+      renderFilterSummary();
+      load().catch((error) => status.textContent = error.message);
+    });
+    $('resetFiltersBtn').addEventListener('click', () => {
+      Object.values(filterFields).forEach((element) => {
+        if (element) element.value = '';
+      });
+      applyFilters(true);
+      renderFilterSummary();
+      load().catch((error) => status.textContent = error.message);
+    });
     $('refreshBtn').addEventListener('click', () => load().catch((error) => status.textContent = error.message));
     $('demoBtn').addEventListener('click', () => runDemo().catch((error) => status.textContent = error.message));
+    filterSummary.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-clear-filter]');
+      if (!button) return;
+      const key = button.getAttribute('data-clear-filter');
+      const field = filterFields[key];
+      if (!field) return;
+      field.value = '';
+      applyFilters(true);
+      renderFilterSummary();
+      load().catch((error) => status.textContent = error.message);
+    });
+    $('platforms').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-platform-card]');
+      if (!button) return;
+      filterFields.platform.value = button.getAttribute('data-platform-card') || '';
+      applyFilters(true);
+      renderFilterSummary();
+      load().catch((error) => status.textContent = error.message);
+    });
+    $('drafts').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-draft-id]');
+      if (!button) return;
+      selectedDraftId = button.getAttribute('data-draft-id') || '';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    });
+    $('reviews').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-review-id]');
+      if (!button) return;
+      selectedReviewId = button.getAttribute('data-review-id') || '';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    });
+    $('publishWorkbench').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-publish-key]');
+      if (!button) return;
+      selectedPublishKey = button.getAttribute('data-publish-key') || '';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    });
+    $('publishes').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-publish-status]');
+      if (!button) return;
+      filterFields.platform.value = button.getAttribute('data-publish-platform') || '';
+      filterFields.publishStatus.value = button.getAttribute('data-publish-status') || '';
+      applyFilters(true);
+      renderFilterSummary();
+      load().catch((error) => status.textContent = error.message);
+    });
+    $('topics').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-topic-id]');
+      if (!button) return;
+      selectedTopicId = button.getAttribute('data-topic-id') || '';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    });
+    topicDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-topic-action]');
+      if (!button) return;
+      const topicId = button.getAttribute('data-topic-id');
+      const action = button.getAttribute('data-topic-action');
+      if (!topicId || !action) return;
+      mutateTopic(topicId, action).catch((error) => status.textContent = error.message);
+    });
+    draftDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-draft-action]');
+      if (!button) return;
+      const draftId = button.getAttribute('data-draft-id');
+      const action = button.getAttribute('data-draft-action');
+      if (!draftId || !action) return;
+      mutateDraft(draftId, action).catch((error) => status.textContent = error.message);
+    });
+    reviewDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-review-action]');
+      if (!button) return;
+      const reviewId = button.getAttribute('data-review-id');
+      const action = button.getAttribute('data-review-action');
+      if (!reviewId || !action) return;
+      mutateReview(reviewId, action).catch((error) => status.textContent = error.message);
+    });
+    publishDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-publish-action]');
+      if (!button) return;
+      const action = button.getAttribute('data-publish-action');
+      if (!action) return;
+      if (action === 'create') {
+        const channelVariantId = button.getAttribute('data-channel-variant-id');
+        const platform = button.getAttribute('data-platform');
+        if (!channelVariantId || !platform) return;
+        mutatePublish(action, { channelVariantId, platform }).catch((error) => status.textContent = error.message);
+        return;
+      }
+
+      const publishTaskId = button.getAttribute('data-publish-task-id');
+      if (!publishTaskId) return;
+      mutatePublish(action, { publishTaskId }).catch((error) => status.textContent = error.message);
+    });
+    syncFiltersFromLocation();
+    renderFilterSummary();
     load().catch((error) => status.textContent = error.message);
   </script>
 </body>

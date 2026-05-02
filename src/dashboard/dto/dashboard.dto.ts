@@ -1,10 +1,34 @@
-import { IsArray, IsDateString, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { DraftStatus, DraftType, PlatformType, PublishStatus, ReviewStatus, SourceStatus, SourceType, TopicStatus } from '../../common/enums/workflow.enums';
 
 export class DashboardOverviewQueryDto {
   @IsOptional()
   @IsDateString()
   date?: string;
+
+  @IsOptional()
+  @IsString()
+  platform?: string;
+
+  @IsOptional()
+  @IsEnum(SourceStatus)
+  sourceStatus?: SourceStatus;
+
+  @IsOptional()
+  @IsEnum(TopicStatus)
+  topicStatus?: TopicStatus;
+
+  @IsOptional()
+  @IsEnum(DraftStatus)
+  draftStatus?: DraftStatus;
+
+  @IsOptional()
+  @IsEnum(ReviewStatus)
+  reviewStatus?: ReviewStatus;
+
+  @IsOptional()
+  @IsEnum(PublishStatus)
+  publishStatus?: PublishStatus;
 }
 
 export class DashboardOverviewDto {
@@ -98,11 +122,19 @@ export class DashboardTopicSummaryDto {
   @IsString()
   angle?: string;
 
+  @IsOptional()
+  @IsString()
+  summary?: string;
+
   @IsNumber()
   score!: number;
 
   @IsString()
   status!: TopicStatus;
+
+  @IsInt()
+  @Min(0)
+  normalizedItemCount!: number;
 }
 
 export class DashboardDraftSummaryDto {
@@ -135,9 +167,50 @@ export class DashboardDraftSummaryDto {
   reviewStatus?: ReviewStatus;
 }
 
+export class DashboardReviewSummaryDto {
+  @IsString()
+  id!: string;
+
+  @IsString()
+  draftId!: string;
+
+  @IsString()
+  draftTitle!: string;
+
+  @IsString()
+  draftType!: DraftType;
+
+  @IsString()
+  status!: ReviewStatus;
+
+  @IsArray()
+  availablePlatforms!: PlatformType[];
+
+  @IsOptional()
+  @IsString()
+  scheduledAt?: string;
+
+  @IsOptional()
+  @IsString()
+  approvedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  rejectedAt?: string;
+}
+
 export class DashboardPublishSummaryDto {
   @IsString()
   id!: string;
+
+  @IsString()
+  channelVariantId!: string;
+
+  @IsString()
+  draftId!: string;
+
+  @IsString()
+  draftType!: DraftType;
 
   @IsString()
   platform!: PlatformType;
@@ -151,11 +224,43 @@ export class DashboardPublishSummaryDto {
 
   @IsOptional()
   @IsString()
+  scheduledAt?: string;
+
+  @IsInt()
+  @Min(0)
+  retryCount!: number;
+
+  @IsOptional()
+  @IsString()
+  errorMessage?: string;
+
+  @IsOptional()
+  @IsString()
   remotePostId?: string;
 
   @IsOptional()
   @IsString()
   publishedAt?: string;
+}
+
+export class DashboardPublishCandidateDto {
+  @IsString()
+  channelVariantId!: string;
+
+  @IsString()
+  draftId!: string;
+
+  @IsString()
+  draftTitle!: string;
+
+  @IsString()
+  draftType!: DraftType;
+
+  @IsString()
+  platform!: PlatformType;
+
+  @IsString()
+  variantStatus!: string;
 }
 
 export class DashboardTotalsDto {
@@ -191,7 +296,13 @@ export class DashboardVisualizationDto {
   drafts!: DashboardDraftSummaryDto[];
 
   @IsArray()
+  reviews!: DashboardReviewSummaryDto[];
+
+  @IsArray()
   publishes!: DashboardPublishSummaryDto[];
+
+  @IsArray()
+  publishCandidates!: DashboardPublishCandidateDto[];
 
   @IsArray()
   platformBreakdown!: DashboardPlatformBreakdownDto[];
