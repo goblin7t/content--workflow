@@ -41,6 +41,20 @@ Use the standalone script at:
 
 It bootstraps a Nest application context, runs the same workflow, and prints a JSON summary.
 
+## Validation
+
+Useful verification commands:
+
+- `npx tsc --noEmit`
+- `npm run test:integration`
+- `npm run test:e2e:demo`
+
+Notes:
+
+- `npm run test:integration` validates the demo workflow and dashboard aggregation without starting an HTTP listener, so it works better in sandboxed environments.
+- `npm run test:e2e:demo` exercises the real HTTP layer and requires permission to bind a local port.
+- If the e2e command fails with `listen EPERM`, re-run it outside the restricted sandbox rather than treating it as an application failure.
+
 ## Notes
 
 - The current implementation persists workflow state through `PrismaService` and PostgreSQL.
