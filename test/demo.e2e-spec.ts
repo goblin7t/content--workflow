@@ -133,6 +133,10 @@ describe('DemoController (e2e)', () => {
     expect(page.text).toContain('feedback');
     expect(page.text).toContain('stageNav');
     expect(page.text).toContain('Workflow Control');
+    expect(page.text).toContain('overviewDetail');
+    expect(page.text).toContain('sourceDetail');
+    expect(page.text).toContain('运行采集');
+    expect(page.text).toContain('同步来源');
     expect(page.text).toContain('topicDetail');
     expect(page.text).toContain('选择选题');
     expect(page.text).toContain('draftDetail');

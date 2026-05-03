@@ -554,6 +554,11 @@ export function renderDashboardPage(): string {
       box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
     }
 
+    .source-row.active {
+      background: rgba(120, 133, 117, 0.18);
+      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+    }
+
     .detail-stack {
       display: grid;
       gap: 12px;
@@ -738,6 +743,11 @@ export function renderDashboardPage(): string {
             <h2>发布渠道</h2>
             <div class="platforms" id="platforms"></div>
           </article>
+
+          <article class="card panel">
+            <h2>总览操作</h2>
+            <div class="detail-stack" id="overviewDetail"></div>
+          </article>
         </section>
 
         <section class="workbench stage-panel" data-stage-panel="topics">
@@ -788,14 +798,15 @@ export function renderDashboardPage(): string {
           </article>
         </section>
 
-        <section class="split stage-panel" data-stage-panel="sources">
+        <section class="workbench stage-panel" data-stage-panel="sources">
           <article class="card panel">
             <h2>信息来源</h2>
             <div class="list" id="sources"></div>
           </article>
 
           <article class="card panel">
-            <h2>最近发布筛选</h2>
+            <h2>来源详情</h2>
+            <div class="detail-stack" id="sourceDetail"></div>
             <div class="list" id="publishes"></div>
           </article>
         </section>
@@ -814,10 +825,12 @@ export function renderDashboardPage(): string {
     const feedback = $('feedback');
     const stageNav = $('stageNav');
     const stageHint = $('stageHint');
+    const overviewDetail = $('overviewDetail');
     const topicDetail = $('topicDetail');
     const draftDetail = $('draftDetail');
     const reviewDetail = $('reviewDetail');
     const publishDetail = $('publishDetail');
+    const sourceDetail = $('sourceDetail');
     const filterFields = {
       date: $('dateFilter'),
       platform: $('platformFilter'),
@@ -832,6 +845,7 @@ export function renderDashboardPage(): string {
     let selectedDraftId = '';
     let selectedReviewId = '';
     let selectedPublishKey = '';
+    let selectedSourceId = '';
     let activeStage = 'overview';
     let isBusy = false;
     let busyActionKey = '';
@@ -1133,6 +1147,44 @@ export function renderDashboardPage(): string {
       return listPublishEntries(data).find((entry) => entry.key === selectedPublishKey) || null;
     }
 
+    function syncSelectedSource(data) {
+      const stillExists = data.sources.some((source) => source.id === selectedSourceId);
+      if (!stillExists) {
+        selectedSourceId = data.sources[0] ? data.sources[0].id : '';
+      }
+    }
+
+    function getSelectedSource(data) {
+      return data.sources.find((source) => source.id === selectedSourceId) || null;
+    }
+
+    function renderOverviewDetail(data) {
+      const filtersApplied = Object.values(filterFields).filter((element) => element && element.value).length;
+      overviewDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Overview Console</div>' +
+          '<div class="detail-title">今天的工作台</div>' +
+          '<div class="meta">这里适合做全局动作：补跑 demo、触发 ingestion、或者快速切到待处理最多的阶段。</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('筛选 ' + filtersApplied, filtersApplied ? 'warn' : 'ok') +
+            pill('来源 ' + data.sources.length, 'ok') +
+            pill('发布候选 ' + data.publishCandidates.length, data.publishCandidates.length ? 'warn' : 'ok') +
+          '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Quick Actions</div>' +
+          '<div class="detail-actions">' +
+            '<button type="button" data-overview-action="run-ingestion"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('overview:run-ingestion', '运行采集') + '</button>' +
+            '<button class="primary" type="button" data-overview-action="run-demo"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('demo:run', '重跑 Demo') + '</button>' +
+            '<button type="button" data-overview-action="go-reviews"' + (isBusy ? ' disabled' : '') + '>查看审核</button>' +
+            '<button type="button" data-overview-action="go-publish"' + (isBusy ? ' disabled' : '') + '>查看发布</button>' +
+          '</div>' +
+          '<div class="detail-note">运行采集会对所有 active source 追加一轮 raw item；如果只是想看全链路回放，就直接重跑 Demo。</div>' +
+        '</article>';
+    }
+
     function renderTopicDetail(data) {
       const topic = getSelectedTopic(data);
       if (!topic) {
@@ -1292,12 +1344,49 @@ export function renderDashboardPage(): string {
         '</article>';
     }
 
+    function renderSourceDetail(data) {
+      const source = getSelectedSource(data);
+      if (!source) {
+        sourceDetail.innerHTML = empty('当前筛选下没有来源可操作。');
+        return;
+      }
+
+      const nextStatus = source.status === 'active' ? 'disabled' : 'active';
+      const toggleLabel = source.status === 'active' ? '停用来源' : '启用来源';
+      sourceDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Source Workbench</div>' +
+          '<div class="detail-title">' + esc(source.name) + '</div>' +
+          '<div class="meta">' + esc(source.type) + ' · 平台 ' + esc(source.platform) + ' · 状态 ' + esc(source.status) + '</div>' +
+          '<div class="meta">最近同步：' + esc(source.lastSyncedAt || '尚未同步') + '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('状态 ' + source.status, source.status === 'active' ? 'ok' : 'warn') +
+            pill(source.lastSyncedAt ? '已同步' : '未同步', source.lastSyncedAt ? 'ok' : 'warn') +
+          '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">Quick Actions</div>' +
+          '<div class="detail-actions">' +
+            '<button class="primary" type="button" data-source-action="sync" data-source-id="' + esc(source.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('source:sync', '同步来源') + '</button>' +
+            '<button type="button" data-source-action="toggle-status" data-source-id="' + esc(source.id) + '" data-next-status="' + esc(nextStatus) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('source:toggle-status', toggleLabel) + '</button>' +
+          '</div>' +
+          '<div class="detail-note">同步来源会刷新该 source 的 lastSyncedAt；启停状态会影响全局 ingestion 是否包含它。</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">最近发布筛选</div>' +
+          '<div class="detail-note">下面的发布列表仍然保留，用来从来源阶段顺手切到发布筛选视角。</div>' +
+        '</article>';
+    }
+
     function render(data) {
       latestVisualization = data;
       syncSelectedTopic(data);
       syncSelectedDraft(data);
       syncSelectedReview(data);
       syncSelectedPublish(data);
+      syncSelectedSource(data);
       renderStageNav(data);
       const overview = data.overview;
       const totals = data.totals;
@@ -1335,6 +1424,7 @@ export function renderDashboardPage(): string {
       $('platforms').innerHTML = data.platformBreakdown.map((item) =>
         '<button class="platform" type="button" data-platform-card="' + esc(item.platform) + '" aria-label="筛选平台 ' + esc(item.platform) + '"><div class="platform-name"><span>' + esc(item.platform) + '</span>' + pill(item.published + '/' + item.publishTasks, item.failed ? 'hot' : 'ok') + '</div><div class="meta">浏览 ' + esc(item.views) + ' · 点赞 ' + esc(item.likes) + ' · 评论 ' + esc(item.comments) + '</div><div class="bar"><div class="fill" style="width:' + (item.publishTasks ? Math.round((item.published / item.publishTasks) * 100) : 0) + '%"></div></div></button>'
       ).join('');
+      renderOverviewDetail(data);
 
       $('topics').innerHTML = renderRows(data.topics, (topic) =>
         '<button class="row interactive-row topic-row' + (topic.id === selectedTopicId ? ' active' : '') + '" type="button" data-topic-id="' + esc(topic.id) + '" aria-label="查看选题 ' + esc(topic.title) + '"><div><div class="title">' + esc(topic.title) + '</div><div class="meta">' + esc(topic.angle || '暂无角度') + ' · 热度 ' + esc(topic.score) + ' · 候选素材 ' + esc(topic.normalizedItemCount) + '</div></div>' + pill(topic.status, topic.status === 'selected' ? 'ok' : 'warn') + '</button>',
@@ -1368,9 +1458,10 @@ export function renderDashboardPage(): string {
       renderPublishDetail(data);
 
       $('sources').innerHTML = renderRows(data.sources, (source) =>
-        '<div class="row"><div><div class="title">' + esc(source.name) + '</div><div class="meta">' + esc(source.type) + ' · ' + esc(source.platform) + '</div></div>' + pill(source.status, source.status === 'active' ? 'ok' : '') + '</div>',
+        '<button class="row interactive-row source-row' + (source.id === selectedSourceId ? ' active' : '') + '" type="button" data-source-id="' + esc(source.id) + '" aria-label="查看来源 ' + esc(source.name) + '"><div><div class="title">' + esc(source.name) + '</div><div class="meta">' + esc(source.type) + ' · ' + esc(source.platform) + ' · 最近同步 ' + esc(source.lastSyncedAt || 'never') + '</div></div>' + pill(source.status, source.status === 'active' ? 'ok' : '') + '</button>',
         '还没有信息源。'
       );
+      renderSourceDetail(data);
 
       $('publishes').innerHTML = renderRows(data.publishes.slice(0, 10), (task) =>
         '<button class="row interactive-row" type="button" data-publish-platform="' + esc(task.platform) + '" data-publish-status="' + esc(task.status) + '" aria-label="筛选发布 ' + esc(task.platform + ' ' + task.status) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(task.platform) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>',
@@ -1400,6 +1491,20 @@ export function renderDashboardPage(): string {
         if (!response.ok) throw new Error(await describeError(response, 'Demo 运行失败'));
         await load();
         showFeedback('ok', '操作完成', 'Demo 工作流已跑完，工作台数据已经刷新。');
+      } finally {
+        clearBusy();
+      }
+    }
+
+    async function runIngestion() {
+      setBusy('overview:run-ingestion', '正在对 active 来源运行 ingestion...');
+      try {
+        const response = await fetch(apiRoot + '/ingestion/run', {
+          method: 'POST'
+        });
+        if (!response.ok) throw new Error(await describeError(response, '运行采集失败'));
+        await load();
+        showFeedback('ok', '操作完成', '全局 ingestion 已触发，来源同步时间和总览指标已刷新。');
       } finally {
         clearBusy();
       }
@@ -1575,6 +1680,37 @@ export function renderDashboardPage(): string {
       }
     }
 
+    async function mutateSource(sourceId, action, payload) {
+      setBusy('source:' + action, '正在执行来源操作...');
+      try {
+        let response;
+        if (action === 'sync') {
+          response = await fetch(apiRoot + '/sources/' + encodeURIComponent(sourceId) + '/sync', {
+            method: 'POST'
+          });
+        } else if (action === 'toggle-status') {
+          response = await fetch(apiRoot + '/sources/' + encodeURIComponent(sourceId), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: payload.nextStatus })
+          });
+        } else {
+          throw new Error('未知来源操作');
+        }
+
+        if (!response.ok) throw new Error(await describeError(response, '来源操作失败'));
+        selectedSourceId = sourceId;
+        await load();
+        if (action === 'sync') {
+          showFeedback('ok', '操作完成', '来源已同步。');
+        } else {
+          showFeedback('ok', '操作完成', payload.nextStatus === 'active' ? '来源已启用。' : '来源已停用。');
+        }
+      } finally {
+        clearBusy();
+      }
+    }
+
     $('applyFiltersBtn').addEventListener('click', () => {
       applyFilters(true);
       renderFilterSummary();
@@ -1611,6 +1747,35 @@ export function renderDashboardPage(): string {
       setStatus(error.message);
       clearBusy();
     }));
+    overviewDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-overview-action]');
+      if (!button) return;
+      const action = button.getAttribute('data-overview-action');
+      if (!action) return;
+      if (action === 'run-ingestion') {
+        runIngestion().catch((error) => {
+          showFeedback('error', '操作失败', error.message);
+          setStatus(error.message);
+          clearBusy();
+        });
+        return;
+      }
+      if (action === 'run-demo') {
+        runDemo().catch((error) => {
+          showFeedback('error', '操作失败', error.message);
+          setStatus(error.message);
+          clearBusy();
+        });
+        return;
+      }
+      if (action === 'go-reviews') {
+        setActiveStage('reviews', true);
+        return;
+      }
+      if (action === 'go-publish') {
+        setActiveStage('publish', true);
+      }
+    });
     filterSummary.addEventListener('click', (event) => {
       const button = event.target.closest('[data-clear-filter]');
       if (!button) return;
@@ -1656,6 +1821,14 @@ export function renderDashboardPage(): string {
       const button = event.target.closest('[data-publish-key]');
       if (!button) return;
       selectedPublishKey = button.getAttribute('data-publish-key') || '';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    });
+    $('sources').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-source-id]');
+      if (!button) return;
+      selectedSourceId = button.getAttribute('data-source-id') || '';
       if (latestVisualization) {
         render(latestVisualization);
       }
@@ -1732,6 +1905,19 @@ export function renderDashboardPage(): string {
       const publishTaskId = button.getAttribute('data-publish-task-id');
       if (!publishTaskId) return;
       mutatePublish(action, { publishTaskId }).catch((error) => {
+        showFeedback('error', '操作失败', error.message);
+        setStatus(error.message);
+      });
+    });
+    sourceDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-source-action]');
+      if (!button) return;
+      const sourceId = button.getAttribute('data-source-id');
+      const action = button.getAttribute('data-source-action');
+      if (!sourceId || !action) return;
+      mutateSource(sourceId, action, {
+        nextStatus: button.getAttribute('data-next-status') || undefined,
+      }).catch((error) => {
         showFeedback('error', '操作失败', error.message);
         setStatus(error.message);
       });
