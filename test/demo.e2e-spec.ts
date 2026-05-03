@@ -80,6 +80,98 @@ describe('DemoController (e2e)', () => {
       .expect(400);
   });
 
+  it('creates and updates a source with full editable fields', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/api/v1/sources')
+      .send({
+        name: 'Custom Feed',
+        type: 'rss',
+        platform: 'facebook',
+        status: 'active',
+        config: {
+          feedUrl: 'https://example.com/feed.xml',
+          notes: 'seed',
+        },
+      })
+      .expect(201);
+
+    expect(created.body.name).toBe('Custom Feed');
+    expect(created.body.platform).toBe('facebook');
+    expect(created.body.type).toBe('rss');
+    expect(created.body.config.feedUrl).toContain('example.com');
+
+    const updated = await request(app.getHttpServer())
+      .patch('/api/v1/sources/' + created.body.id)
+      .send({
+        name: 'Editorial Queue',
+        type: 'manual',
+        platform: 'xiaohongshu',
+        status: 'disabled',
+        config: {
+          operator: 'desk',
+          notes: 'manually curated',
+        },
+      })
+      .expect(200);
+
+    expect(updated.body.name).toBe('Editorial Queue');
+    expect(updated.body.type).toBe('manual');
+    expect(updated.body.platform).toBe('xiaohongshu');
+    expect(updated.body.status).toBe('disabled');
+    expect(updated.body.config.operator).toBe('desk');
+  });
+
+  it('queues ingestion and executes the job through the jobs API', async () => {
+    const source = await request(app.getHttpServer())
+      .post('/api/v1/sources')
+      .send({
+        name: 'Queue Feed',
+        type: 'social_api',
+        platform: 'tiktok',
+        status: 'active',
+        config: {
+          account: 'queue-lab',
+        },
+      })
+      .expect(201);
+
+    const accepted = await request(app.getHttpServer())
+      .post('/api/v1/ingestion/run')
+      .expect(201);
+
+    expect(accepted.body.status).toBe('queued');
+    expect(accepted.body.jobId).toBeTruthy();
+
+    const queuedJob = await request(app.getHttpServer())
+      .get('/api/v1/jobs/' + accepted.body.jobId)
+      .expect(200);
+
+    expect(queuedJob.body.jobType).toBe('ingestion.run_all_sources');
+    expect(queuedJob.body.status).toBe('queued');
+
+    const completed = await request(app.getHttpServer())
+      .post('/api/v1/jobs/' + accepted.body.jobId + '/run')
+      .expect(201);
+
+    expect(completed.body.status).toBe('succeeded');
+    expect(completed.body.startedAt).toBeTruthy();
+    expect(completed.body.finishedAt).toBeTruthy();
+
+    const rawItems = await request(app.getHttpServer())
+      .get('/api/v1/raw-items')
+      .query({ sourceId: source.body.id })
+      .expect(200);
+
+    expect(rawItems.body.items).toHaveLength(1);
+
+    const visualization = await request(app.getHttpServer())
+      .get('/api/v1/dashboard/visualization')
+      .expect(200);
+
+    expect(visualization.body.jobs).toHaveLength(1);
+    expect(visualization.body.jobs[0].status).toBe('succeeded');
+  });
+
   it('serves dashboard visualization data and page', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/demo/run')
@@ -132,11 +224,19 @@ describe('DemoController (e2e)', () => {
     expect(page.text).toContain('applyFiltersBtn');
     expect(page.text).toContain('feedback');
     expect(page.text).toContain('stageNav');
-    expect(page.text).toContain('Workflow Control');
+    expect(page.text).toContain('流程控制');
     expect(page.text).toContain('overviewDetail');
     expect(page.text).toContain('sourceDetail');
     expect(page.text).toContain('运行采集');
+    expect(page.text).toContain('查看任务');
     expect(page.text).toContain('同步来源');
+    expect(page.text).toContain('任务工作区');
+    expect(page.text).toContain('任务详情');
+    expect(page.text).toContain('jobDetail');
+    expect(page.text).toContain('新建来源');
+    expect(page.text).toContain('来源编辑器');
+    expect(page.text).toContain('保存来源');
+    expect(page.text).toContain('采集任务已入队');
     expect(page.text).toContain('topicDetail');
     expect(page.text).toContain('选择选题');
     expect(page.text).toContain('draftDetail');

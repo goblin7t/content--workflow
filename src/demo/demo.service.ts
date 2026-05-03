@@ -34,7 +34,7 @@ export class DemoService {
 
     const sourceIds = await this.seedSources();
 
-    await this.ingestionService.runIngestion();
+    await this.ingestionService.executeIngestion();
     await this.normalizationService.runNormalization();
 
     const topicDate = body.topicDate ?? nowIso().slice(0, 10);

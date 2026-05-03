@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
 import { DraftStatus, DraftType, PlatformType, PublishStatus, ReviewStatus, SourceStatus, SourceType, TopicStatus } from '../../common/enums/workflow.enums';
 
 export class DashboardOverviewQueryDto {
@@ -106,9 +106,22 @@ export class DashboardSourceSummaryDto {
   @IsString()
   status!: SourceStatus;
 
+  @IsObject()
+  config!: Record<string, unknown>;
+
   @IsOptional()
   @IsString()
   lastSyncedAt?: string;
+
+  @IsString()
+  createdAt!: string;
+
+  @IsString()
+  updatedAt!: string;
+
+  @IsInt()
+  @Min(0)
+  rawItemsCount!: number;
 }
 
 export class DashboardTopicSummaryDto {
@@ -263,6 +276,43 @@ export class DashboardPublishCandidateDto {
   variantStatus!: string;
 }
 
+export class DashboardJobSummaryDto {
+  @IsString()
+  id!: string;
+
+  @IsString()
+  jobType!: string;
+
+  @IsString()
+  status!: string;
+
+  @IsObject()
+  payload!: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  topicId?: string;
+
+  @IsOptional()
+  @IsString()
+  draftId?: string;
+
+  @IsOptional()
+  @IsString()
+  errorMessage?: string;
+
+  @IsOptional()
+  @IsString()
+  startedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  finishedAt?: string;
+
+  @IsString()
+  createdAt!: string;
+}
+
 export class DashboardTotalsDto {
   @IsInt()
   @Min(0)
@@ -306,4 +356,7 @@ export class DashboardVisualizationDto {
 
   @IsArray()
   platformBreakdown!: DashboardPlatformBreakdownDto[];
+
+  @IsArray()
+  jobs!: DashboardJobSummaryDto[];
 }

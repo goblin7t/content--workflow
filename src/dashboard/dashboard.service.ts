@@ -145,7 +145,11 @@ export class DashboardService {
         type: source.type,
         platform: source.platform,
         status: source.status,
+        config: source.config,
         lastSyncedAt: source.lastSyncedAt,
+        createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
+        rawItemsCount: data.rawItems.filter((item) => item.sourceId === source.id).length,
       })),
       topics: data.topics.map((topic) => ({
         id: topic.id,
@@ -161,6 +165,18 @@ export class DashboardService {
       publishes: publishSummaries,
       publishCandidates,
       platformBreakdown,
+      jobs: data.jobs.map((job) => ({
+        id: job.id,
+        topicId: job.topicId,
+        draftId: job.draftId,
+        jobType: job.jobType,
+        status: job.status,
+        payload: job.payload,
+        errorMessage: job.errorMessage,
+        startedAt: job.startedAt,
+        finishedAt: job.finishedAt,
+        createdAt: job.createdAt,
+      })),
     };
   }
 
@@ -201,6 +217,7 @@ export class DashboardService {
       publishTasksByQuery,
       allPublishTasks,
       metricsByQuery,
+      jobs,
     ] = await Promise.all([
       this.store.listSources({
         platform: query.platform,
@@ -226,6 +243,7 @@ export class DashboardService {
       this.store.listMetrics({
         platform: platformFilter,
       }),
+      this.store.listContentJobs({}),
     ]);
 
     const sourceIds = new Set(sources.map((source) => source.id));
@@ -304,6 +322,7 @@ export class DashboardService {
       reviews,
       publishTasks,
       metrics,
+      jobs,
       variantsByDraft,
       variantById,
       draftById,

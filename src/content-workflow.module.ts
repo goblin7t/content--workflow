@@ -12,6 +12,9 @@ import { DraftsController } from './drafts/drafts.controller';
 import { DraftsService } from './drafts/drafts.service';
 import { IngestionController } from './ingestion/ingestion.controller';
 import { IngestionService } from './ingestion/ingestion.service';
+import { JobsController } from './jobs/jobs.controller';
+import { JobsRunnerService } from './jobs/jobs.runner';
+import { JobsService } from './jobs/jobs.service';
 import { MetricsController } from './metrics/metrics.controller';
 import { MetricsService } from './metrics/metrics.service';
 import { NormalizationController } from './normalization/normalization.controller';
@@ -34,6 +37,7 @@ import { TopicsService } from './topics/topics.service';
     DemoController,
     DraftsController,
     IngestionController,
+    JobsController,
     MetricsController,
     NormalizationController,
     PublishController,
@@ -48,6 +52,8 @@ import { TopicsService } from './topics/topics.service';
     DemoService,
     DraftsService,
     IngestionService,
+    JobsRunnerService,
+    JobsService,
     MetricsService,
     NormalizationService,
     PublishService,

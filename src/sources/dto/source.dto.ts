@@ -44,6 +44,14 @@ export class UpdateSourceDto {
   name?: string;
 
   @IsOptional()
+  @IsEnum(SourceType)
+  type?: SourceType;
+
+  @IsOptional()
+  @IsString()
+  platform?: string;
+
+  @IsOptional()
   @IsObject()
   config?: Record<string, unknown>;
 

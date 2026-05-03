@@ -21,6 +21,7 @@ import { ListMetricsQueryDto, PerformanceMetricDto } from '../../src/metrics/dto
 import { ListNormalizedItemsQueryDto, NormalizedItemDto } from '../../src/normalization/dto/normalization.dto';
 import { ListPublishTasksQueryDto, PublishTaskDto } from '../../src/publish/dto/publish.dto';
 import { ListReviewTasksQueryDto, ReviewTaskDto } from '../../src/review/dto/review.dto';
+import { ContentJobDto, CreateJobDto, ListJobsQueryDto } from '../../src/jobs/dto/job.dto';
 import { CreateSourceDto, ListSourcesQueryDto, SourceDto, UpdateSourceDto } from '../../src/sources/dto/source.dto';
 import { ListTopicsQueryDto, TopicDto, UpdateTopicDto } from '../../src/topics/dto/topic.dto';
 
@@ -42,6 +43,7 @@ export class WorkflowStoreFake {
   private readonly reviewTasks: ReviewTaskDto[] = [];
   private readonly publishTasks: PublishTaskDto[] = [];
   private readonly performanceMetrics: PerformanceMetricDto[] = [];
+  private readonly contentJobs: ContentJobDto[] = [];
   private readonly publishIdempotency = new Map<string, IdempotencyRecord>();
 
   async reset(): Promise<void> {
@@ -55,6 +57,7 @@ export class WorkflowStoreFake {
     this.reviewTasks.length = 0;
     this.publishTasks.length = 0;
     this.performanceMetrics.length = 0;
+    this.contentJobs.length = 0;
     this.publishIdempotency.clear();
   }
 
@@ -583,6 +586,50 @@ export class WorkflowStoreFake {
 
   async listMetricsByPublishTask(publishTaskId: string): Promise<PerformanceMetricDto[]> {
     return this.performanceMetrics.filter((metric) => metric.publishTaskId === publishTaskId);
+  }
+
+  async listContentJobs(query: ListJobsQueryDto): Promise<ContentJobDto[]> {
+    return this.contentJobs.filter((job) => {
+      if (query.status && job.status !== query.status) {
+        return false;
+      }
+      if (query.jobType && job.jobType !== query.jobType) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  async createContentJob(body: CreateJobDto & { status: string; payload: Record<string, unknown> }): Promise<ContentJobDto> {
+    const job: ContentJobDto = {
+      id: randomUUID(),
+      topicId: body.topicId,
+      draftId: body.draftId,
+      jobType: body.jobType,
+      status: body.status,
+      payload: body.payload ?? {},
+      createdAt: nowIso(),
+    };
+    this.contentJobs.unshift(job);
+    return job;
+  }
+
+  async getContentJob(jobId: string): Promise<ContentJobDto> {
+    const job = this.contentJobs.find((item) => item.id === jobId);
+    if (!job) {
+      throw new Error(`Job ${jobId} not found`);
+    }
+    return job;
+  }
+
+  async updateContentJob(jobId: string, body: Partial<ContentJobDto>): Promise<ContentJobDto> {
+    const job = await this.getContentJob(jobId);
+    Object.assign(job, body);
+    return job;
+  }
+
+  async findNextQueuedContentJob(jobType?: string): Promise<ContentJobDto | null> {
+    return this.contentJobs.find((job) => job.status === 'queued' && (!jobType || job.jobType === jobType)) ?? null;
   }
 
   async countRawItems(): Promise<number> {

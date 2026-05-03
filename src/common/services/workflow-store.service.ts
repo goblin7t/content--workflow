@@ -35,6 +35,7 @@ import { PerformanceMetricDto, ListMetricsQueryDto } from '../../metrics/dto/met
 import { NormalizedItemDto, ListNormalizedItemsQueryDto } from '../../normalization/dto/normalization.dto';
 import { PublishTaskDto, ListPublishTasksQueryDto } from '../../publish/dto/publish.dto';
 import { ReviewTaskDto, ListReviewTasksQueryDto } from '../../review/dto/review.dto';
+import { ContentJobDto, CreateJobDto, ListJobsQueryDto } from '../../jobs/dto/job.dto';
 import { CreateSourceDto, ListSourcesQueryDto, SourceDto, UpdateSourceDto } from '../../sources/dto/source.dto';
 import { TopicDto, ListTopicsQueryDto, UpdateTopicDto } from '../../topics/dto/topic.dto';
 
@@ -238,6 +239,8 @@ export class WorkflowStoreService {
       where: { id: sourceId },
       data: {
         name: body.name,
+        type: body.type ? sourceTypeToDb[body.type] : undefined,
+        platform: body.platform,
         config: body.config ? toJsonValue(body.config) : undefined,
         status: body.status ? sourceStatusToDb[body.status] : undefined,
       },
@@ -941,6 +944,63 @@ export class WorkflowStoreService {
     return items.map((item) => this.mapPerformanceMetric(item));
   }
 
+  async listContentJobs(query: ListJobsQueryDto): Promise<ContentJobDto[]> {
+    const items = await this.prisma.contentJob.findMany({
+      where: {
+        status: query.status,
+        jobType: query.jobType,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return items.map((item) => this.mapContentJob(item));
+  }
+
+  async createContentJob(body: CreateJobDto & { status: string; payload: Record<string, unknown> }): Promise<ContentJobDto> {
+    const job = await this.prisma.contentJob.create({
+      data: {
+        topicId: body.topicId,
+        draftId: body.draftId,
+        jobType: body.jobType,
+        status: body.status,
+        payload: toJsonValue(body.payload),
+      },
+    });
+    return this.mapContentJob(job);
+  }
+
+  async getContentJob(jobId: string): Promise<ContentJobDto> {
+    const job = await this.prisma.contentJob.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new NotFoundException(`Job ${jobId} not found`);
+    }
+    return this.mapContentJob(job);
+  }
+
+  async updateContentJob(jobId: string, body: Partial<ContentJobDto>): Promise<ContentJobDto> {
+    const job = await this.prisma.contentJob.update({
+      where: { id: jobId },
+      data: {
+        status: body.status,
+        payload: body.payload ? toJsonValue(body.payload) : undefined,
+        errorMessage: body.errorMessage === undefined ? undefined : body.errorMessage,
+        startedAt: body.startedAt ? new Date(body.startedAt) : body.startedAt === null ? null : undefined,
+        finishedAt: body.finishedAt ? new Date(body.finishedAt) : body.finishedAt === null ? null : undefined,
+      },
+    });
+    return this.mapContentJob(job);
+  }
+
+  async findNextQueuedContentJob(jobType?: string): Promise<ContentJobDto | null> {
+    const job = await this.prisma.contentJob.findFirst({
+      where: {
+        status: 'queued',
+        jobType,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return job ? this.mapContentJob(job) : null;
+  }
+
   async countRawItems(): Promise<number> {
     return this.prisma.rawItem.count();
   }
@@ -1182,6 +1242,21 @@ export class WorkflowStoreService {
       saves: item.saves,
       clicks: item.clicks,
       capturedAt: this.toIso(item.capturedAt)!,
+    };
+  }
+
+  private mapContentJob(item: any): ContentJobDto {
+    return {
+      id: item.id,
+      topicId: item.topicId ?? undefined,
+      draftId: item.draftId ?? undefined,
+      jobType: item.jobType,
+      status: item.status,
+      payload: (item.payload as Record<string, unknown>) ?? {},
+      errorMessage: item.errorMessage ?? undefined,
+      startedAt: this.toIso(item.startedAt),
+      finishedAt: this.toIso(item.finishedAt),
+      createdAt: this.toIso(item.createdAt)!,
     };
   }
 

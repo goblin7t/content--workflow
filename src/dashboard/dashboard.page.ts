@@ -7,16 +7,16 @@ export function renderDashboardPage(): string {
   <title>内容工作流 Dashboard</title>
   <style>
     :root {
-      --ink: #17201b;
-      --muted: #68736d;
-      --paper: #f6f1e8;
-      --card: rgba(255, 252, 244, 0.82);
-      --line: rgba(30, 42, 35, 0.14);
-      --mint: #73b89d;
-      --clay: #c86f43;
-      --gold: #e8b849;
-      --sky: #668fc8;
-      --shadow: 0 24px 70px rgba(39, 49, 43, 0.16);
+      --ink: #0d4950;
+      --muted: #6a888d;
+      --paper: #f5fffe;
+      --card: rgba(255, 255, 255, 0.92);
+      --line: rgba(13, 73, 80, 0.1);
+      --mint: #81d8d0;
+      --clay: #2ab7c0;
+      --gold: #d9f8f4;
+      --sky: #6dd8e1;
+      --shadow: 0 24px 64px rgba(20, 86, 92, 0.12);
     }
 
     * { box-sizing: border-box; }
@@ -26,9 +26,9 @@ export function renderDashboardPage(): string {
       color: var(--ink);
       font-family: "Avenir Next", "Trebuchet MS", Verdana, sans-serif;
       background:
-        radial-gradient(circle at 12% 6%, rgba(115, 184, 157, 0.38), transparent 34rem),
-        radial-gradient(circle at 88% 0%, rgba(232, 184, 73, 0.34), transparent 30rem),
-        linear-gradient(135deg, #f5efe4 0%, #e8eee5 100%);
+        radial-gradient(circle at 10% 10%, rgba(129, 216, 208, 0.34), transparent 30rem),
+        radial-gradient(circle at 84% 4%, rgba(109, 216, 225, 0.18), transparent 24rem),
+        linear-gradient(135deg, #fbffff 0%, #f0fcfb 48%, #f8fffe 100%);
       min-height: 100vh;
     }
 
@@ -100,7 +100,8 @@ export function renderDashboardPage(): string {
     }
 
     .field input,
-    .field select {
+    .field select,
+    .field textarea {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -108,6 +109,12 @@ export function renderDashboardPage(): string {
       color: var(--ink);
       background: rgba(255, 255, 255, 0.6);
       font: inherit;
+    }
+
+    .field textarea {
+      min-height: 132px;
+      resize: vertical;
+      line-height: 1.5;
     }
 
     .filter-summary {
@@ -178,18 +185,18 @@ export function renderDashboardPage(): string {
     }
 
     .feedback.ok {
-      border-color: rgba(115, 184, 157, 0.3);
-      background: rgba(115, 184, 157, 0.12);
+      border-color: rgba(129, 216, 208, 0.34);
+      background: rgba(129, 216, 208, 0.15);
     }
 
     .feedback.error {
-      border-color: rgba(200, 111, 67, 0.3);
-      background: rgba(200, 111, 67, 0.12);
+      border-color: rgba(42, 183, 192, 0.28);
+      background: rgba(42, 183, 192, 0.1);
     }
 
     .feedback.busy {
-      border-color: rgba(232, 184, 73, 0.3);
-      background: rgba(232, 184, 73, 0.12);
+      border-color: rgba(109, 216, 225, 0.28);
+      background: rgba(109, 216, 225, 0.12);
     }
 
     button {
@@ -204,8 +211,8 @@ export function renderDashboardPage(): string {
     }
 
     button.primary {
-      color: #fffaf0;
-      background: var(--ink);
+      color: #f8fffe;
+      background: linear-gradient(135deg, #0d4950, #2ab7c0);
     }
 
     button:disabled {
@@ -227,7 +234,7 @@ export function renderDashboardPage(): string {
 
     .card {
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       border: 1px solid var(--line);
       border-radius: 28px;
       background: var(--card);
@@ -237,6 +244,9 @@ export function renderDashboardPage(): string {
     }
 
     .metric {
+      position: relative;
+      overflow: hidden;
+      border-radius: inherit;
       padding: 18px;
       min-height: 128px;
     }
@@ -249,12 +259,12 @@ export function renderDashboardPage(): string {
       right: -28px;
       bottom: -28px;
       border-radius: 999px;
-      background: rgba(115, 184, 157, 0.24);
+      background: rgba(129, 216, 208, 0.24);
     }
 
-    .metric:nth-child(2)::after { background: rgba(232, 184, 73, 0.28); }
-    .metric:nth-child(3)::after { background: rgba(200, 111, 67, 0.24); }
-    .metric:nth-child(4)::after { background: rgba(102, 143, 200, 0.24); }
+    .metric:nth-child(2)::after { background: rgba(217, 248, 244, 0.42); }
+    .metric:nth-child(3)::after { background: rgba(42, 183, 192, 0.18); }
+    .metric:nth-child(4)::after { background: rgba(109, 216, 225, 0.18); }
 
     .label {
       color: var(--muted);
@@ -271,7 +281,7 @@ export function renderDashboardPage(): string {
     }
 
     .main {
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 1fr;
       align-items: start;
     }
 
@@ -286,6 +296,18 @@ export function renderDashboardPage(): string {
       letter-spacing: -0.04em;
     }
 
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+    }
+
     .pipeline {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -294,10 +316,10 @@ export function renderDashboardPage(): string {
 
     .step {
       min-height: 128px;
-      border: 1px dashed rgba(23, 32, 27, 0.2);
+      border: 1px dashed rgba(15, 78, 85, 0.16);
       border-radius: 22px;
       padding: 14px;
-      background: rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.46);
     }
 
     .step strong {
@@ -309,7 +331,7 @@ export function renderDashboardPage(): string {
     .bar {
       height: 10px;
       border-radius: 999px;
-      background: rgba(23, 32, 27, 0.08);
+      background: rgba(15, 78, 85, 0.08);
       overflow: hidden;
     }
 
@@ -317,7 +339,7 @@ export function renderDashboardPage(): string {
       height: 100%;
       width: 0;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--mint), var(--gold), var(--clay));
+      background: linear-gradient(90deg, var(--mint), var(--sky), var(--clay));
       transition: width 500ms ease;
     }
 
@@ -334,7 +356,7 @@ export function renderDashboardPage(): string {
       color: inherit;
       padding: 14px;
       border-radius: 22px;
-      background: rgba(255, 255, 255, 0.42);
+      background: rgba(255, 255, 255, 0.6);
       border: 1px solid var(--line);
     }
 
@@ -344,7 +366,7 @@ export function renderDashboardPage(): string {
     .interactive-row:focus-visible {
       outline: none;
       transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+      box-shadow: 0 14px 28px rgba(20, 86, 92, 0.12);
     }
 
     .platform-name {
@@ -385,7 +407,7 @@ export function renderDashboardPage(): string {
 
     .interactive-row:hover,
     .interactive-row:focus-visible {
-      background: rgba(255, 255, 255, 0.46);
+      background: rgba(129, 216, 208, 0.1);
     }
 
     .row:first-child { border-top: 0; }
@@ -406,22 +428,22 @@ export function renderDashboardPage(): string {
       align-self: start;
       border-radius: 999px;
       padding: 6px 10px;
-      background: rgba(23, 32, 27, 0.08);
+      background: rgba(15, 78, 85, 0.08);
       color: var(--ink);
       font-size: 12px;
       font-weight: 900;
       white-space: nowrap;
     }
 
-    .pill.ok { background: rgba(115, 184, 157, 0.26); }
-    .pill.warn { background: rgba(232, 184, 73, 0.28); }
-    .pill.hot { background: rgba(200, 111, 67, 0.24); }
+    .pill.ok { background: rgba(129, 216, 208, 0.28); }
+    .pill.warn { background: rgba(217, 248, 244, 0.78); }
+    .pill.hot { background: rgba(109, 216, 225, 0.2); }
 
     .empty, .status {
       color: var(--muted);
       padding: 16px;
       border-radius: 18px;
-      background: rgba(255, 255, 255, 0.36);
+      background: rgba(255, 255, 255, 0.62);
     }
 
     .split {
@@ -479,18 +501,18 @@ export function renderDashboardPage(): string {
       text-align: left;
       border-radius: 20px;
       padding: 14px 16px;
-      background: rgba(255, 255, 255, 0.42);
+      background: rgba(255, 255, 255, 0.62);
     }
 
     .stage-nav-btn.active {
-      border-color: rgba(23, 32, 27, 0.24);
-      background: rgba(23, 32, 27, 0.9);
-      color: #fffaf0;
-      box-shadow: 0 18px 34px rgba(23, 32, 27, 0.18);
+      border-color: rgba(13, 73, 80, 0.22);
+      background: linear-gradient(135deg, rgba(13, 73, 80, 0.95), rgba(42, 183, 192, 0.82));
+      color: #f7fffe;
+      box-shadow: 0 18px 34px rgba(20, 86, 92, 0.2);
     }
 
     .stage-nav-btn.active .meta {
-      color: rgba(255, 250, 240, 0.72);
+      color: rgba(247, 255, 254, 0.74);
     }
 
     .stage-count {
@@ -498,23 +520,25 @@ export function renderDashboardPage(): string {
       padding: 6px 10px;
       font-size: 12px;
       font-weight: 900;
-      background: rgba(23, 32, 27, 0.08);
+      background: rgba(15, 78, 85, 0.08);
       color: inherit;
       white-space: nowrap;
     }
 
     .stage-nav-btn.active .stage-count {
-      background: rgba(255, 250, 240, 0.18);
+      background: rgba(247, 255, 254, 0.18);
     }
 
     .stage-hint {
+      position: relative;
+      overflow: visible;
       color: var(--muted);
       font-size: 13px;
       line-height: 1.6;
       padding: 14px 16px;
       border-radius: 18px;
-      background: rgba(255, 255, 255, 0.34);
-      border: 1px dashed rgba(23, 32, 27, 0.14);
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px dashed rgba(15, 78, 85, 0.14);
     }
 
     .stage-content {
@@ -535,28 +559,33 @@ export function renderDashboardPage(): string {
     }
 
     .topic-row.active {
-      background: rgba(115, 184, 157, 0.18);
-      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+      background: rgba(129, 216, 208, 0.18);
+      box-shadow: 0 14px 28px rgba(26, 72, 78, 0.12);
     }
 
     .draft-row.active {
-      background: rgba(232, 184, 73, 0.18);
-      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+      background: rgba(217, 248, 244, 0.42);
+      box-shadow: 0 14px 28px rgba(26, 72, 78, 0.12);
     }
 
     .review-row.active {
-      background: rgba(102, 143, 200, 0.18);
-      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+      background: rgba(109, 216, 225, 0.16);
+      box-shadow: 0 14px 28px rgba(26, 72, 78, 0.12);
     }
 
     .publish-row.active {
-      background: rgba(196, 116, 88, 0.18);
-      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+      background: rgba(42, 183, 192, 0.14);
+      box-shadow: 0 14px 28px rgba(26, 72, 78, 0.12);
+    }
+
+    .job-row.active {
+      background: rgba(13, 73, 80, 0.12);
+      box-shadow: 0 14px 28px rgba(26, 72, 78, 0.12);
     }
 
     .source-row.active {
-      background: rgba(120, 133, 117, 0.18);
-      box-shadow: 0 14px 28px rgba(33, 43, 37, 0.12);
+      background: rgba(129, 216, 208, 0.14);
+      box-shadow: 0 14px 28px rgba(26, 72, 78, 0.12);
     }
 
     .detail-stack {
@@ -565,6 +594,8 @@ export function renderDashboardPage(): string {
     }
 
     .detail-card {
+      position: relative;
+      overflow: visible;
       padding: 16px;
       border-radius: 22px;
       border: 1px solid var(--line);
@@ -599,6 +630,209 @@ export function renderDashboardPage(): string {
       line-height: 1.5;
     }
 
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-stat {
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(15, 78, 85, 0.08);
+    }
+
+    .mini-stat strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .editor-switch {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .editor-switch button.active {
+      color: #f8fffe;
+      background: linear-gradient(135deg, #0d4950, #2ab7c0);
+    }
+
+    .editor-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .config-preview {
+      margin: 0;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(15, 78, 85, 0.08);
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+    }
+
+    .hint-corner {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: block;
+      z-index: 30;
+    }
+
+    .hint-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(42, 183, 192, 0.18);
+      background: rgba(255, 255, 255, 0.84);
+      color: rgba(13, 73, 80, 0.72);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: help;
+      box-shadow: 0 6px 18px rgba(20, 86, 92, 0.06);
+      backdrop-filter: blur(10px);
+      transition: border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .hint-trigger:hover,
+    .hint-trigger:focus-visible,
+    .hint-trigger[data-open="true"] {
+      color: var(--ink);
+      border-color: rgba(42, 183, 192, 0.28);
+      box-shadow: 0 10px 22px rgba(20, 86, 92, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .floating-hint {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: min(320px, calc(100vw - 32px));
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(42, 183, 192, 0.14);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 255, 253, 0.96));
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 18px 38px rgba(20, 86, 92, 0.1);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px) scale(0.98);
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 200;
+      text-align: left;
+    }
+
+    .floating-hint::before {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: rgba(252, 255, 255, 0.98);
+      transform: rotate(45deg);
+      border-top: 1px solid rgba(42, 183, 192, 0.14);
+      border-left: 1px solid rgba(42, 183, 192, 0.14);
+    }
+
+    .floating-hint[data-side="bottom"]::before {
+      right: 14px;
+      top: -7px;
+      width: 14px;
+      height: 14px;
+    }
+
+    .floating-hint[data-side="top"]::before {
+      right: 14px;
+      bottom: -7px;
+      border-top: none;
+      border-left: none;
+      border-right: 1px solid rgba(42, 183, 192, 0.14);
+      border-bottom: 1px solid rgba(42, 183, 192, 0.14);
+    }
+
+    .floating-hint.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .command-hero {
+      display: grid;
+      gap: 14px;
+    }
+
+    .command-summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .command-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .command-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .command-row.single {
+      grid-template-columns: 1fr;
+    }
+
+    .command-button {
+      width: 100%;
+      border-radius: 18px;
+      padding: 14px 16px;
+      text-align: left;
+      display: grid;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .command-button strong {
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .command-button span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .command-button.primary {
+      background: linear-gradient(135deg, #0d4950, #2ab7c0);
+    }
+
+    .command-button.primary span {
+      color: rgba(248, 255, 254, 0.78);
+    }
+
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
@@ -609,7 +843,9 @@ export function renderDashboardPage(): string {
       .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .pipeline, .platforms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .editor-grid, .detail-meta-grid { grid-template-columns: 1fr; }
       .actions { justify-content: flex-start; }
+      .command-row { grid-template-columns: 1fr; }
       .stage-rail {
         position: static;
       }
@@ -622,6 +858,10 @@ export function renderDashboardPage(): string {
       .shell { width: min(100% - 20px, 1180px); padding-top: 22px; }
       .filters,
       .metrics, .pipeline, .platforms { grid-template-columns: 1fr; }
+      .panel-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
       .metric { min-height: 110px; }
       .stage-nav { grid-template-columns: 1fr; }
     }
@@ -650,64 +890,64 @@ export function renderDashboardPage(): string {
         <label for="platformFilter">平台</label>
         <select id="platformFilter">
           <option value="">全部平台</option>
-          <option value="rss">rss</option>
-          <option value="xiaohongshu">xiaohongshu</option>
-          <option value="douyin">douyin</option>
-          <option value="tiktok">tiktok</option>
-          <option value="facebook">facebook</option>
+          <option value="rss">RSS</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="douyin">抖音</option>
+          <option value="tiktok">TikTok</option>
+          <option value="facebook">Facebook</option>
         </select>
       </div>
       <div class="field">
         <label for="draftStatusFilter">草稿状态</label>
         <select id="draftStatusFilter">
           <option value="">全部草稿</option>
-          <option value="draft">draft</option>
-          <option value="rendered">rendered</option>
-          <option value="in_review">in_review</option>
-          <option value="approved">approved</option>
-          <option value="rejected">rejected</option>
-          <option value="scheduled">scheduled</option>
-          <option value="published">published</option>
-          <option value="failed">failed</option>
+          <option value="draft">草稿中</option>
+          <option value="rendered">已渲染</option>
+          <option value="in_review">审核中</option>
+          <option value="approved">已通过</option>
+          <option value="rejected">已驳回</option>
+          <option value="scheduled">已排期</option>
+          <option value="published">已发布</option>
+          <option value="failed">失败</option>
         </select>
       </div>
       <div class="field">
         <label for="publishStatusFilter">发布状态</label>
         <select id="publishStatusFilter">
           <option value="">全部发布任务</option>
-          <option value="queued">queued</option>
-          <option value="running">running</option>
-          <option value="published">published</option>
-          <option value="failed">failed</option>
-          <option value="cancelled">cancelled</option>
+          <option value="queued">待执行</option>
+          <option value="running">执行中</option>
+          <option value="published">已发布</option>
+          <option value="failed">失败</option>
+          <option value="cancelled">已取消</option>
         </select>
       </div>
       <div class="field">
         <label for="sourceStatusFilter">来源状态</label>
         <select id="sourceStatusFilter">
           <option value="">全部来源</option>
-          <option value="active">active</option>
-          <option value="disabled">disabled</option>
+          <option value="active">启用中</option>
+          <option value="disabled">已停用</option>
         </select>
       </div>
       <div class="field">
         <label for="topicStatusFilter">选题状态</label>
         <select id="topicStatusFilter">
           <option value="">全部选题</option>
-          <option value="candidate">candidate</option>
-          <option value="selected">selected</option>
-          <option value="rejected">rejected</option>
-          <option value="archived">archived</option>
+          <option value="candidate">候选中</option>
+          <option value="selected">已选中</option>
+          <option value="rejected">已拒绝</option>
+          <option value="archived">已归档</option>
         </select>
       </div>
       <div class="field">
         <label for="reviewStatusFilter">审核状态</label>
         <select id="reviewStatusFilter">
           <option value="">全部审核任务</option>
-          <option value="pending">pending</option>
-          <option value="approved">approved</option>
-          <option value="rejected">rejected</option>
-          <option value="regenerate_requested">regenerate_requested</option>
+          <option value="pending">待审核</option>
+          <option value="approved">已通过</option>
+          <option value="rejected">已驳回</option>
+          <option value="regenerate_requested">要求重生成</option>
         </select>
       </div>
       <div class="actions">
@@ -725,7 +965,7 @@ export function renderDashboardPage(): string {
     <section class="control-room">
       <aside class="card stage-rail">
         <div class="stage-nav-header">
-          <strong>Workflow Control</strong>
+          <strong>流程控制</strong>
           <span>左侧选阶段，右侧只保留当前工作区，让推进动作和状态变化更聚焦。</span>
         </div>
         <div class="stage-nav" id="stageNav"></div>
@@ -735,8 +975,8 @@ export function renderDashboardPage(): string {
       <div class="stage-content">
         <section class="grid main stage-panel" data-stage-panel="overview">
           <article class="card panel">
-            <h2>业务管线</h2>
-            <div class="pipeline" id="pipeline"></div>
+            <h2>总览操作</h2>
+            <div class="detail-stack" id="overviewDetail"></div>
           </article>
 
           <article class="card panel">
@@ -745,8 +985,8 @@ export function renderDashboardPage(): string {
           </article>
 
           <article class="card panel">
-            <h2>总览操作</h2>
-            <div class="detail-stack" id="overviewDetail"></div>
+            <h2>业务管线</h2>
+            <div class="pipeline" id="pipeline"></div>
           </article>
         </section>
 
@@ -798,9 +1038,24 @@ export function renderDashboardPage(): string {
           </article>
         </section>
 
+        <section class="workbench stage-panel" data-stage-panel="jobs">
+          <article class="card panel">
+            <h2>任务工作区</h2>
+            <div class="list" id="jobs"></div>
+          </article>
+
+          <article class="card panel">
+            <h2>任务详情</h2>
+            <div class="detail-stack" id="jobDetail"></div>
+          </article>
+        </section>
+
         <section class="workbench stage-panel" data-stage-panel="sources">
           <article class="card panel">
-            <h2>信息来源</h2>
+            <div class="panel-header">
+              <h2>信息来源</h2>
+              <button class="primary" id="createSourceBtn" type="button">新建来源</button>
+            </div>
             <div class="list" id="sources"></div>
           </article>
 
@@ -813,6 +1068,7 @@ export function renderDashboardPage(): string {
       </div>
     </section>
 
+    <div class="floating-hint" id="floatingHint" aria-hidden="true"></div>
     <p class="status" id="status">正在读取工作流数据...</p>
   </main>
 
@@ -823,6 +1079,7 @@ export function renderDashboardPage(): string {
     const filterSummary = $('filterSummary');
     const resultSummary = $('resultSummary');
     const feedback = $('feedback');
+    const floatingHint = $('floatingHint');
     const stageNav = $('stageNav');
     const stageHint = $('stageHint');
     const overviewDetail = $('overviewDetail');
@@ -830,6 +1087,7 @@ export function renderDashboardPage(): string {
     const draftDetail = $('draftDetail');
     const reviewDetail = $('reviewDetail');
     const publishDetail = $('publishDetail');
+    const jobDetail = $('jobDetail');
     const sourceDetail = $('sourceDetail');
     const filterFields = {
       date: $('dateFilter'),
@@ -845,17 +1103,21 @@ export function renderDashboardPage(): string {
     let selectedDraftId = '';
     let selectedReviewId = '';
     let selectedPublishKey = '';
+    let selectedJobId = '';
     let selectedSourceId = '';
+    let sourceEditorMode = 'edit';
     let activeStage = 'overview';
     let isBusy = false;
     let busyActionKey = '';
     let lastLoadedAt = '';
+    let activeHintTrigger = null;
     const stageConfig = [
       { key: 'overview', label: '总览', note: '先看全局吞吐、平台分布和流程健康度。' },
       { key: 'topics', label: '选题', note: '从候选选题开始推进，决定今天要写什么。' },
       { key: 'drafts', label: '草稿', note: '围绕草稿补素材、提审或重生成。' },
       { key: 'reviews', label: '审核', note: '聚焦人工判断，把可发内容往前推进。' },
       { key: 'publish', label: '发布', note: '创建、执行、重试或取消发布任务。' },
+      { key: 'jobs', label: '任务', note: '查看已入队、执行中和失败的后台任务。' },
       { key: 'sources', label: '来源', note: '检查输入来源和最近发布筛选结果。' }
     ];
 
@@ -867,6 +1129,141 @@ export function renderDashboardPage(): string {
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
+    }
+
+    function optionLabel(element) {
+      if (!element) return '';
+      const option = element.selectedOptions && element.selectedOptions[0];
+      return option ? option.textContent.trim() : (element.value || '').trim();
+    }
+
+    function platformLabel(value) {
+      const labels = {
+        rss: 'RSS',
+        xiaohongshu: '小红书',
+        douyin: '抖音',
+        tiktok: 'TikTok',
+        facebook: 'Facebook'
+      };
+      return labels[value] || value || '未知平台';
+    }
+
+    function sourceTypeLabel(value) {
+      const labels = {
+        rss: 'RSS',
+        social_api: '社媒接口',
+        manual: '手动录入'
+      };
+      return labels[value] || value || '未知来源类型';
+    }
+
+    function topicStatusLabel(value) {
+      const labels = {
+        candidate: '候选中',
+        selected: '已选中',
+        rejected: '已拒绝',
+        archived: '已归档'
+      };
+      return labels[value] || value || '未知状态';
+    }
+
+    function draftTypeLabel(value) {
+      const labels = {
+        summary: '摘要稿',
+        deep: '深度稿'
+      };
+      return labels[value] || value || '未知草稿类型';
+    }
+
+    function draftStatusLabel(value) {
+      const labels = {
+        draft: '草稿中',
+        rendered: '已渲染',
+        in_review: '审核中',
+        approved: '已通过',
+        rejected: '已驳回',
+        scheduled: '已排期',
+        published: '已发布',
+        failed: '失败'
+      };
+      return labels[value] || value || '未知状态';
+    }
+
+    function reviewStatusLabel(value) {
+      const labels = {
+        pending: '待审核',
+        approved: '已通过',
+        rejected: '已驳回',
+        regenerate_requested: '要求重生成'
+      };
+      return labels[value] || value || '未知状态';
+    }
+
+    function publishStatusLabel(value) {
+      const labels = {
+        queued: '待执行',
+        running: '执行中',
+        published: '已发布',
+        failed: '失败',
+        cancelled: '已取消'
+      };
+      return labels[value] || value || '未知状态';
+    }
+
+    function jobStatusLabel(value) {
+      const labels = {
+        queued: '已入队',
+        running: '执行中',
+        succeeded: '已完成',
+        failed: '失败',
+        cancelled: '已取消'
+      };
+      return labels[value] || value || '未知状态';
+    }
+
+    function jobTypeLabel(value) {
+      const labels = {
+        'ingestion.run_all_sources': '全量采集',
+      };
+      return labels[value] || value || '未知任务';
+    }
+
+    function sourceStatusLabel(value) {
+      const labels = {
+        active: '启用中',
+        disabled: '已停用'
+      };
+      return labels[value] || value || '未知状态';
+    }
+
+    function sourceTypeOptions(selected) {
+      return [
+        ['rss', 'RSS'],
+        ['social_api', '社媒接口'],
+        ['manual', '人工录入']
+      ].map(([value, label]) =>
+        '<option value="' + esc(value) + '"' + (selected === value ? ' selected' : '') + '>' + esc(label) + '</option>'
+      ).join('');
+    }
+
+    function sourceStatusOptions(selected) {
+      return [
+        ['active', '启用中'],
+        ['disabled', '已停用']
+      ].map(([value, label]) =>
+        '<option value="' + esc(value) + '"' + (selected === value ? ' selected' : '') + '>' + esc(label) + '</option>'
+      ).join('');
+    }
+
+    function platformOptions(selected) {
+      return [
+        ['xiaohongshu', '小红书'],
+        ['douyin', '抖音'],
+        ['tiktok', 'TikTok'],
+        ['facebook', 'Facebook']
+      ].map(([value, label]) =>
+        '<option value="' + esc(value) + '"' + (selected === value ? ' selected' : '') + '>' + esc(label) + '</option>'
+      ).join('');
     }
 
     function metric(label, value) {
@@ -884,6 +1281,59 @@ export function renderDashboardPage(): string {
 
     function empty(text) {
       return '<div class="empty">' + esc(text) + '</div>';
+    }
+
+    function hintMarker(text, label = '查看说明') {
+      return '<span class="hint-corner">' +
+        '<span class="hint-trigger" tabindex="0" role="button" aria-label="' + esc(label) + '" data-hint-text="' + esc(text) + '">?</span>' +
+      '</span>';
+    }
+
+    function positionHint(trigger) {
+      if (!trigger) return;
+      const margin = 16;
+      const gap = 12;
+      const rect = trigger.getBoundingClientRect();
+      const width = floatingHint.offsetWidth || 300;
+      const height = floatingHint.offsetHeight || 80;
+      const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.right - width));
+      let top = rect.bottom + gap;
+      let side = 'bottom';
+
+      if (top + height > window.innerHeight - margin) {
+        top = rect.top - height - gap;
+        side = 'top';
+      }
+
+      top = Math.max(margin, Math.min(window.innerHeight - height - margin, top));
+      floatingHint.dataset.side = side;
+      floatingHint.style.left = left + 'px';
+      floatingHint.style.top = top + 'px';
+    }
+
+    function hideHint() {
+      if (activeHintTrigger) {
+        activeHintTrigger.removeAttribute('data-open');
+      }
+      activeHintTrigger = null;
+      floatingHint.classList.remove('visible');
+      floatingHint.setAttribute('aria-hidden', 'true');
+    }
+
+    function showHint(trigger) {
+      const text = trigger && trigger.getAttribute('data-hint-text');
+      if (!text) return;
+
+      if (activeHintTrigger && activeHintTrigger !== trigger) {
+        activeHintTrigger.removeAttribute('data-open');
+      }
+
+      activeHintTrigger = trigger;
+      activeHintTrigger.setAttribute('data-open', 'true');
+      floatingHint.textContent = text;
+      floatingHint.setAttribute('aria-hidden', 'false');
+      floatingHint.classList.add('visible');
+      positionHint(trigger);
     }
 
     function showFeedback(tone, title, message) {
@@ -1048,6 +1498,7 @@ export function renderDashboardPage(): string {
         drafts: data.drafts.length,
         reviews: data.reviews.length,
         publish: data.publishes.length + data.publishCandidates.length,
+        jobs: data.jobs.length,
         sources: data.sources.length,
       };
     }
@@ -1062,7 +1513,7 @@ export function renderDashboardPage(): string {
       ).join('');
 
       const current = stageConfig.find((stage) => stage.key === activeStage) || stageConfig[0];
-      stageHint.textContent = current.note;
+      stageHint.innerHTML = '<strong>当前阶段</strong> ' + esc(current.label) + hintMarker(current.note);
       renderStagePanels();
     }
 
@@ -1079,7 +1530,7 @@ export function renderDashboardPage(): string {
       const active = Object.entries(filterFields)
         .map(([key, element]) => {
           const value = element && element.value ? element.value.trim() : '';
-          return value ? filterChip(key, labels[key], value) : '';
+          return value ? filterChip(key, labels[key], optionLabel(element)) : '';
         })
         .filter(Boolean);
 
@@ -1147,6 +1598,17 @@ export function renderDashboardPage(): string {
       return listPublishEntries(data).find((entry) => entry.key === selectedPublishKey) || null;
     }
 
+    function syncSelectedJob(data) {
+      const stillExists = data.jobs.some((job) => job.id === selectedJobId);
+      if (!stillExists) {
+        selectedJobId = data.jobs[0] ? data.jobs[0].id : '';
+      }
+    }
+
+    function getSelectedJob(data) {
+      return data.jobs.find((job) => job.id === selectedJobId) || null;
+    }
+
     function syncSelectedSource(data) {
       const stillExists = data.sources.some((source) => source.id === selectedSourceId);
       if (!stillExists) {
@@ -1158,30 +1620,70 @@ export function renderDashboardPage(): string {
       return data.sources.find((source) => source.id === selectedSourceId) || null;
     }
 
+    function prettyJson(value) {
+      try {
+        return JSON.stringify(value ?? {}, null, 2);
+      } catch (error) {
+        return '{}';
+      }
+    }
+
+    function defaultSourceConfig() {
+      return {
+        endpoint: '',
+        notes: '',
+      };
+    }
+
     function renderOverviewDetail(data) {
       const filtersApplied = Object.values(filterFields).filter((element) => element && element.value).length;
       overviewDetail.innerHTML =
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Overview Console</div>' +
-          '<div class="detail-title">今天的工作台</div>' +
-          '<div class="meta">这里适合做全局动作：补跑 demo、触发 ingestion、或者快速切到待处理最多的阶段。</div>' +
-        '</article>' +
-        '<article class="detail-card">' +
-          '<div class="detail-actions">' +
-            pill('筛选 ' + filtersApplied, filtersApplied ? 'warn' : 'ok') +
-            pill('来源 ' + data.sources.length, 'ok') +
-            pill('发布候选 ' + data.publishCandidates.length, data.publishCandidates.length ? 'warn' : 'ok') +
+          hintMarker('这里放的是最常用的全局动作：刷新演示数据、运行采集，或者快速切到审核与发布阶段。') +
+          '<div class="command-hero">' +
+            '<div>' +
+              '<div class="detail-kicker">总览控制台</div>' +
+              '<div class="detail-title">今天的工作台</div>' +
+              '<div class="meta">先看整体，再决定下一步动作。</div>' +
+            '</div>' +
+            '<div class="command-summary">' +
+              pill('筛选 ' + filtersApplied, filtersApplied ? 'warn' : 'ok') +
+              pill('来源 ' + data.sources.length, 'ok') +
+              pill('发布候选 ' + data.publishCandidates.length, data.publishCandidates.length ? 'warn' : 'ok') +
+            '</div>' +
           '</div>' +
         '</article>' +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Quick Actions</div>' +
-          '<div class="detail-actions">' +
-            '<button type="button" data-overview-action="run-ingestion"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('overview:run-ingestion', '运行采集') + '</button>' +
-            '<button class="primary" type="button" data-overview-action="run-demo"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('demo:run', '重跑 Demo') + '</button>' +
-            '<button type="button" data-overview-action="go-reviews"' + (isBusy ? ' disabled' : '') + '>查看审核</button>' +
-            '<button type="button" data-overview-action="go-publish"' + (isBusy ? ' disabled' : '') + '>查看发布</button>' +
+          hintMarker('如果你现在主要在调界面，用“重跑 Demo”最稳；如果你在试工作流推进，用“运行采集”更接近真实操作。') +
+          '<div class="detail-kicker">主要动作</div>' +
+          '<div class="command-grid">' +
+            '<button class="primary command-button" type="button" data-overview-action="run-demo"' + (isBusy ? ' disabled' : '') + '>' +
+              '<strong>' + actionLabel('demo:run', '重跑 Demo') + '</strong>' +
+              '<span>回到一套干净的演示数据，适合快速检查整体流程和界面变化。</span>' +
+            '</button>' +
+            '<div class="command-row">' +
+              '<button class="command-button" type="button" data-overview-action="run-ingestion"' + (isBusy ? ' disabled' : '') + '>' +
+                '<strong>' + actionLabel('overview:run-ingestion', '运行采集') + '</strong>' +
+                '<span>对所有启用中的来源追加一轮原始内容。</span>' +
+              '</button>' +
+              '<button class="command-button" type="button" data-overview-action="go-reviews"' + (isBusy ? ' disabled' : '') + '>' +
+                '<strong>查看审核</strong>' +
+                '<span>直接切到审核阶段，处理待审核内容。</span>' +
+              '</button>' +
+            '</div>' +
+            '<div class="command-row single">' +
+              '<button class="command-button" type="button" data-overview-action="go-publish"' + (isBusy ? ' disabled' : '') + '>' +
+                '<strong>查看发布</strong>' +
+                '<span>跳到发布阶段，继续创建或执行发布任务。</span>' +
+              '</button>' +
+            '</div>' +
+            '<div class="command-row single">' +
+              '<button class="command-button" type="button" data-overview-action="go-jobs"' + (isBusy ? ' disabled' : '') + '>' +
+                '<strong>查看任务</strong>' +
+                '<span>查看已入队和执行中的后台任务，确认系统有没有真正往前走。</span>' +
+              '</button>' +
+            '</div>' +
           '</div>' +
-          '<div class="detail-note">运行采集会对所有 active source 追加一轮 raw item；如果只是想看全链路回放，就直接重跑 Demo。</div>' +
         '</article>';
     }
 
@@ -1196,25 +1698,25 @@ export function renderDashboardPage(): string {
       const canReject = topic.status !== 'rejected';
       topicDetail.innerHTML =
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Topic Workbench</div>' +
+          '<div class="detail-kicker">选题工作台</div>' +
           '<div class="detail-title">' + esc(topic.title) + '</div>' +
           '<div class="meta">' + esc(topic.angle || '暂无选题角度') + '</div>' +
           '<div class="meta">' + esc(topic.summary || '暂无选题摘要') + '</div>' +
         '</article>' +
         '<article class="detail-card">' +
           '<div class="detail-actions">' +
-            pill('状态 ' + topic.status, topic.status === 'selected' ? 'ok' : topic.status === 'rejected' ? 'hot' : 'warn') +
+            pill('状态 ' + topicStatusLabel(topic.status), topic.status === 'selected' ? 'ok' : topic.status === 'rejected' ? 'hot' : 'warn') +
             pill('热度 ' + topic.score, 'warn') +
             pill('候选素材 ' + topic.normalizedItemCount, 'ok') +
           '</div>' +
         '</article>' +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Quick Actions</div>' +
+          hintMarker('先在这里决定题目去留，后续草稿、审核与发布都沿着这条主线继续往下走。') +
+          '<div class="detail-kicker">快捷操作</div>' +
           '<div class="detail-actions">' +
             '<button class="primary" type="button" data-topic-action="select" data-topic-id="' + esc(topic.id) + '"' + (canSelect && !isBusy ? '' : ' disabled') + '>' + actionLabel('topic:select', '选择选题') + '</button>' +
             '<button type="button" data-topic-action="reject" data-topic-id="' + esc(topic.id) + '"' + (canReject && !isBusy ? '' : ' disabled') + '>' + actionLabel('topic:reject', '拒绝选题') + '</button>' +
           '</div>' +
-          '<div class="meta">先在这里推进选题状态，后续再把草稿生成、审核与发布动作并入同一套工作台。</div>' +
         '</article>';
     }
 
@@ -1228,25 +1730,25 @@ export function renderDashboardPage(): string {
       const canSubmitReview = draft.reviewStatus !== 'approved' && draft.reviewStatus !== 'pending';
       draftDetail.innerHTML =
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Draft Workbench</div>' +
+          '<div class="detail-kicker">草稿工作台</div>' +
           '<div class="detail-title">' + esc(draft.title) + '</div>' +
-          '<div class="meta">' + esc(draft.draftType) + ' · 状态 ' + esc(draft.status) + '</div>' +
+          '<div class="meta">' + esc(draftTypeLabel(draft.draftType)) + ' · 状态 ' + esc(draftStatusLabel(draft.status)) + '</div>' +
           '<div class="meta">引用 ' + esc(draft.sourceRefCount) + ' · 素材 ' + esc(draft.assetCount) + ' · 平台版本 ' + esc(draft.variantCount) + '</div>' +
         '</article>' +
         '<article class="detail-card">' +
           '<div class="detail-actions">' +
-            pill('草稿 ' + draft.status, draft.status === 'approved' ? 'ok' : 'warn') +
-            pill('审核 ' + (draft.reviewStatus || 'not_submitted'), draft.reviewStatus === 'approved' ? 'ok' : draft.reviewStatus ? 'warn' : '') +
+            pill('草稿 ' + draftStatusLabel(draft.status), draft.status === 'approved' ? 'ok' : 'warn') +
+            pill('审核 ' + (draft.reviewStatus ? reviewStatusLabel(draft.reviewStatus) : '未提交'), draft.reviewStatus === 'approved' ? 'ok' : draft.reviewStatus ? 'warn' : '') +
           '</div>' +
         '</article>' +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Quick Actions</div>' +
+          hintMarker('这里先接入 3 个高频动作。渲染后会生成标准素材，提交审核后进入审核阶段，重新生成会把版本推进一轮。') +
+          '<div class="detail-kicker">快捷操作</div>' +
           '<div class="detail-actions">' +
             '<button class="primary" type="button" data-draft-action="render" data-draft-id="' + esc(draft.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('draft:render', '渲染素材') + '</button>' +
             '<button type="button" data-draft-action="submit-review" data-draft-id="' + esc(draft.id) + '"' + (canSubmitReview && !isBusy ? '' : ' disabled') + '>' + actionLabel('draft:submit-review', '提交审核') + '</button>' +
             '<button type="button" data-draft-action="regenerate" data-draft-id="' + esc(draft.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('draft:regenerate', '重新生成') + '</button>' +
           '</div>' +
-          '<div class="detail-note">当前先接入 3 个高频动作。渲染后会生成标准素材，提交审核后进入 review 阶段，重新生成会把版本推进一轮。</div>' +
         '</article>';
     }
 
@@ -1260,25 +1762,25 @@ export function renderDashboardPage(): string {
       const canApprove = review.availablePlatforms.length > 0;
       reviewDetail.innerHTML =
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Review Workbench</div>' +
+          '<div class="detail-kicker">审核工作台</div>' +
           '<div class="detail-title">' + esc(review.draftTitle) + '</div>' +
-          '<div class="meta">' + esc(review.draftType) + ' · 审核状态 ' + esc(review.status) + '</div>' +
-          '<div class="meta">可发布平台：' + esc(review.availablePlatforms.join(', ') || '暂无平台版本') + '</div>' +
+          '<div class="meta">' + esc(draftTypeLabel(review.draftType)) + ' · 审核状态 ' + esc(reviewStatusLabel(review.status)) + '</div>' +
+          '<div class="meta">可发布平台：' + esc((review.availablePlatforms.map(platformLabel)).join('、') || '暂无平台版本') + '</div>' +
         '</article>' +
         '<article class="detail-card">' +
           '<div class="detail-actions">' +
-            pill('状态 ' + review.status, review.status === 'approved' ? 'ok' : review.status === 'rejected' ? 'hot' : 'warn') +
+            pill('状态 ' + reviewStatusLabel(review.status), review.status === 'approved' ? 'ok' : review.status === 'rejected' ? 'hot' : 'warn') +
             (review.scheduledAt ? pill('已排期', 'ok') : pill('未排期', 'warn')) +
           '</div>' +
         '</article>' +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Quick Actions</div>' +
+          hintMarker('通过会默认带上该草稿已有的全部平台版本；驳回和要求重生成会要求输入一条简短备注。') +
+          '<div class="detail-kicker">快捷操作</div>' +
           '<div class="detail-actions">' +
             '<button class="primary" type="button" data-review-action="approve" data-review-id="' + esc(review.id) + '"' + (canApprove && !isBusy ? '' : ' disabled') + '>' + actionLabel('review:approve', '审核通过') + '</button>' +
             '<button type="button" data-review-action="reject" data-review-id="' + esc(review.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('review:reject', '驳回审核') + '</button>' +
             '<button type="button" data-review-action="request-regenerate" data-review-id="' + esc(review.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('review:request-regenerate', '要求重生成') + '</button>' +
           '</div>' +
-          '<div class="detail-note">通过会默认带上该草稿已有的全部平台版本；驳回和要求重生成会要求输入一条简短备注。</div>' +
         '</article>';
     }
 
@@ -1293,23 +1795,23 @@ export function renderDashboardPage(): string {
         const candidate = selected.item;
         publishDetail.innerHTML =
           '<article class="detail-card">' +
-            '<div class="detail-kicker">Publish Workbench</div>' +
+            '<div class="detail-kicker">发布工作台</div>' +
             '<div class="detail-title">' + esc(candidate.draftTitle) + '</div>' +
-            '<div class="meta">' + esc(candidate.draftType) + ' · 平台 ' + esc(candidate.platform) + '</div>' +
+            '<div class="meta">' + esc(draftTypeLabel(candidate.draftType)) + ' · 平台 ' + esc(platformLabel(candidate.platform)) + '</div>' +
             '<div class="meta">当前还没有发布任务，这里可以直接补建。</div>' +
           '</article>' +
           '<article class="detail-card">' +
             '<div class="detail-actions">' +
               pill('待创建', 'warn') +
-              pill('版本状态 ' + candidate.variantStatus, 'ok') +
+              pill('版本状态 ' + esc(candidate.variantStatus), 'ok') +
             '</div>' +
           '</article>' +
           '<article class="detail-card">' +
-            '<div class="detail-kicker">Quick Actions</div>' +
+            hintMarker('这里会按当前平台版本创建一条待执行的发布任务，随后就能继续执行发布、取消或重试。') +
+            '<div class="detail-kicker">快捷操作</div>' +
             '<div class="detail-actions">' +
               '<button class="primary" type="button" data-publish-action="create" data-channel-variant-id="' + esc(candidate.channelVariantId) + '" data-platform="' + esc(candidate.platform) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('publish:create', '创建发布任务') + '</button>' +
             '</div>' +
-            '<div class="detail-note">这里会按当前平台版本创建一条 queued publish task，随后就能继续执行发布、取消或重试。</div>' +
           '</article>';
         return;
       }
@@ -1320,72 +1822,158 @@ export function renderDashboardPage(): string {
       const canCancel = task.status === 'queued';
       publishDetail.innerHTML =
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Publish Workbench</div>' +
+          '<div class="detail-kicker">发布工作台</div>' +
           '<div class="detail-title">' + esc(task.draftTitle || task.id) + '</div>' +
-          '<div class="meta">' + esc(task.draftType) + ' · 平台 ' + esc(task.platform) + ' · 状态 ' + esc(task.status) + '</div>' +
+          '<div class="meta">' + esc(draftTypeLabel(task.draftType)) + ' · 平台 ' + esc(platformLabel(task.platform)) + ' · 状态 ' + esc(publishStatusLabel(task.status)) + '</div>' +
           '<div class="meta">' + esc(task.remotePostId || '尚未生成远端发布 ID') + '</div>' +
         '</article>' +
         '<article class="detail-card">' +
           '<div class="detail-actions">' +
-            pill('状态 ' + task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') +
+            pill('状态 ' + publishStatusLabel(task.status), task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') +
             pill('重试 ' + task.retryCount, task.retryCount ? 'warn' : 'ok') +
             (task.scheduledAt ? pill('已排期', 'ok') : pill('立即发布', 'warn')) +
           '</div>' +
           (task.errorMessage ? '<div class="meta">失败原因：' + esc(task.errorMessage) + '</div>' : '') +
         '</article>' +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Quick Actions</div>' +
+          hintMarker('执行发布会带唯一的幂等键；重试只对失败任务生效；取消只对待执行任务生效。') +
+          '<div class="detail-kicker">快捷操作</div>' +
           '<div class="detail-actions">' +
             '<button class="primary" type="button" data-publish-action="run" data-publish-task-id="' + esc(task.id) + '"' + (canRun && !isBusy ? '' : ' disabled') + '>' + actionLabel('publish:run', '执行发布') + '</button>' +
             '<button type="button" data-publish-action="retry" data-publish-task-id="' + esc(task.id) + '"' + (canRetry && !isBusy ? '' : ' disabled') + '>' + actionLabel('publish:retry', '重试发布') + '</button>' +
             '<button type="button" data-publish-action="cancel" data-publish-task-id="' + esc(task.id) + '"' + (canCancel && !isBusy ? '' : ' disabled') + '>' + actionLabel('publish:cancel', '取消发布') + '</button>' +
           '</div>' +
-          '<div class="detail-note">run 会带唯一的 Idempotency-Key，retry 只对 failed 生效，cancel 只对 queued 生效。</div>' +
+        '</article>';
+    }
+
+    function renderJobDetail(data) {
+      const job = getSelectedJob(data);
+      if (!job) {
+        jobDetail.innerHTML = empty('当前还没有后台任务。先运行采集或后续入队动作，再回来查看。');
+        return;
+      }
+
+      const canRun = job.status === 'queued';
+      jobDetail.innerHTML =
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">任务工作台</div>' +
+          '<div class="detail-title">' + esc(jobTypeLabel(job.jobType)) + '</div>' +
+          '<div class="meta">任务状态 ' + esc(jobStatusLabel(job.status)) + ' · 创建于 ' + esc(job.createdAt) + '</div>' +
+          '<div class="meta">Job ID：' + esc(job.id) + '</div>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-actions">' +
+            pill('状态 ' + jobStatusLabel(job.status), job.status === 'succeeded' ? 'ok' : job.status === 'failed' ? 'hot' : 'warn') +
+            (job.startedAt ? pill('已开始', 'ok') : pill('未开始', 'warn')) +
+            (job.finishedAt ? pill('已结束', 'ok') : pill('未结束', 'warn')) +
+          '</div>' +
+          (job.topicId ? '<div class="meta">关联选题：' + esc(job.topicId) + '</div>' : '') +
+          (job.draftId ? '<div class="meta">关联草稿：' + esc(job.draftId) + '</div>' : '') +
+          (job.startedAt ? '<div class="meta">开始时间：' + esc(job.startedAt) + '</div>' : '') +
+          (job.finishedAt ? '<div class="meta">结束时间：' + esc(job.finishedAt) + '</div>' : '') +
+          (job.errorMessage ? '<div class="meta">失败原因：' + esc(job.errorMessage) + '</div>' : '') +
+        '</article>' +
+        '<article class="detail-card">' +
+          '<div class="detail-kicker">任务负载</div>' +
+          '<pre class="config-preview">' + esc(prettyJson(job.payload)) + '</pre>' +
+        '</article>' +
+        '<article class="detail-card">' +
+          hintMarker('第一版先开放最关键的动作：手动执行 queued 任务。等 worker 常驻后，这里还能继续加取消、重试和按类型筛选。') +
+          '<div class="detail-kicker">快捷操作</div>' +
+          '<div class="detail-actions">' +
+            '<button class="primary" type="button" data-job-action="run" data-job-id="' + esc(job.id) + '"' + (canRun && !isBusy ? '' : ' disabled') + '>' + actionLabel('job:run', '执行任务') + '</button>' +
+          '</div>' +
         '</article>';
     }
 
     function renderSourceDetail(data) {
       const source = getSelectedSource(data);
-      if (!source) {
+      if (!source && sourceEditorMode !== 'create') {
         sourceDetail.innerHTML = empty('当前筛选下没有来源可操作。');
         return;
       }
 
-      const nextStatus = source.status === 'active' ? 'disabled' : 'active';
-      const toggleLabel = source.status === 'active' ? '停用来源' : '启用来源';
+      const editingExisting = sourceEditorMode !== 'create' && Boolean(source);
+      const editorSource = editingExisting ? source : {
+        id: '',
+        name: '',
+        type: 'rss',
+        platform: 'xiaohongshu',
+        status: 'active',
+        config: defaultSourceConfig(),
+        rawItemsCount: 0,
+        createdAt: '',
+        updatedAt: '',
+        lastSyncedAt: '',
+      };
+      const nextStatus = source && source.status === 'active' ? 'disabled' : 'active';
+      const toggleLabel = source && source.status === 'active' ? '停用来源' : '启用来源';
       sourceDetail.innerHTML =
+        (source ? (
+          '<article class="detail-card">' +
+            '<div class="detail-kicker">来源工作台</div>' +
+            '<div class="detail-title">' + esc(source.name) + '</div>' +
+            '<div class="meta">' + esc(sourceTypeLabel(source.type)) + ' · 平台 ' + esc(platformLabel(source.platform)) + ' · 状态 ' + esc(sourceStatusLabel(source.status)) + '</div>' +
+            '<div class="meta">最近同步：' + esc(source.lastSyncedAt || '尚未同步') + '</div>' +
+          '</article>' +
+          '<article class="detail-card">' +
+            '<div class="detail-meta-grid">' +
+              '<div class="mini-stat"><div class="label">状态</div><strong>' + esc(sourceStatusLabel(source.status)) + '</strong></div>' +
+              '<div class="mini-stat"><div class="label">原始内容</div><strong>' + esc(source.rawItemsCount) + ' 条</strong></div>' +
+              '<div class="mini-stat"><div class="label">创建时间</div><strong>' + esc(source.createdAt || '未知') + '</strong></div>' +
+              '<div class="mini-stat"><div class="label">更新时间</div><strong>' + esc(source.updatedAt || '未知') + '</strong></div>' +
+            '</div>' +
+          '</article>' +
+          '<article class="detail-card">' +
+            '<div class="detail-kicker">当前配置</div>' +
+            '<pre class="config-preview">' + esc(prettyJson(source.config)) + '</pre>' +
+          '</article>' +
+          '<article class="detail-card">' +
+            hintMarker('同步来源会刷新该来源的最近同步时间；启停状态会影响全局采集是否包含它。') +
+            '<div class="detail-kicker">快捷操作</div>' +
+            '<div class="detail-actions">' +
+              '<button class="primary" type="button" data-source-action="sync" data-source-id="' + esc(source.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('source:sync', '同步来源') + '</button>' +
+              '<button type="button" data-source-action="toggle-status" data-source-id="' + esc(source.id) + '" data-next-status="' + esc(nextStatus) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('source:toggle-status', toggleLabel) + '</button>' +
+            '</div>' +
+          '</article>'
+        ) : '') +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Source Workbench</div>' +
-          '<div class="detail-title">' + esc(source.name) + '</div>' +
-          '<div class="meta">' + esc(source.type) + ' · 平台 ' + esc(source.platform) + ' · 状态 ' + esc(source.status) + '</div>' +
-          '<div class="meta">最近同步：' + esc(source.lastSyncedAt || '尚未同步') + '</div>' +
-        '</article>' +
-        '<article class="detail-card">' +
-          '<div class="detail-actions">' +
-            pill('状态 ' + source.status, source.status === 'active' ? 'ok' : 'warn') +
-            pill(source.lastSyncedAt ? '已同步' : '未同步', source.lastSyncedAt ? 'ok' : 'warn') +
+          hintMarker('这里可以直接维护来源名称、平台、类型和 JSON 配置，不用再跳到单独页面。') +
+          '<div class="detail-kicker">来源编辑器</div>' +
+          '<div class="detail-actions editor-switch">' +
+            '<button type="button" data-source-editor-mode="edit"' + (editingExisting ? ' class="active"' : '') + (source && !isBusy ? '' : ' disabled') + '>编辑当前来源</button>' +
+            '<button type="button" data-source-editor-mode="create"' + (!editingExisting ? ' class="active"' : '') + (isBusy ? ' disabled' : '') + '>新建来源</button>' +
           '</div>' +
+          '<form class="editor-form" data-source-editor-form data-mode="' + (editingExisting ? 'edit' : 'create') + '" data-source-id="' + esc(editorSource.id || '') + '">' +
+            '<div class="editor-grid">' +
+              '<div class="field"><label for="sourceEditorName">来源名称</label><input id="sourceEditorName" name="name" value="' + esc(editorSource.name || '') + '" placeholder="例如：TikTok 热榜监控" ' + (isBusy ? 'disabled ' : '') + 'required /></div>' +
+              '<div class="field"><label for="sourceEditorPlatform">所属平台</label><select id="sourceEditorPlatform" name="platform" ' + (isBusy ? 'disabled ' : '') + '>' + platformOptions(editorSource.platform || 'xiaohongshu') + '</select></div>' +
+              '<div class="field"><label for="sourceEditorType">来源类型</label><select id="sourceEditorType" name="type" ' + (isBusy ? 'disabled ' : '') + '>' + sourceTypeOptions(editorSource.type || 'rss') + '</select></div>' +
+              '<div class="field"><label for="sourceEditorStatus">来源状态</label><select id="sourceEditorStatus" name="status" ' + (isBusy ? 'disabled ' : '') + '>' + sourceStatusOptions(editorSource.status || 'active') + '</select></div>' +
+            '</div>' +
+            '<div class="field"><label for="sourceEditorConfig">配置 JSON</label><textarea id="sourceEditorConfig" name="config" spellcheck="false" ' + (isBusy ? 'disabled ' : '') + '>' + esc(prettyJson(editorSource.config || defaultSourceConfig())) + '</textarea></div>' +
+            '<div class="detail-note">配置会按 JSON 原样保存。适合先快速接不同来源，再逐步细化字段结构。</div>' +
+            '<div class="detail-actions">' +
+              '<button class="primary" type="submit"' + (isBusy ? ' disabled' : '') + '>' + actionLabel(editingExisting ? 'source:update' : 'source:create', editingExisting ? '保存来源' : '创建来源') + '</button>' +
+              '<button type="button" data-source-action="cancel-editor"' + (isBusy ? ' disabled' : '') + '>取消编辑</button>' +
+            '</div>' +
+          '</form>' +
         '</article>' +
         '<article class="detail-card">' +
-          '<div class="detail-kicker">Quick Actions</div>' +
-          '<div class="detail-actions">' +
-            '<button class="primary" type="button" data-source-action="sync" data-source-id="' + esc(source.id) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('source:sync', '同步来源') + '</button>' +
-            '<button type="button" data-source-action="toggle-status" data-source-id="' + esc(source.id) + '" data-next-status="' + esc(nextStatus) + '"' + (isBusy ? ' disabled' : '') + '>' + actionLabel('source:toggle-status', toggleLabel) + '</button>' +
-          '</div>' +
-          '<div class="detail-note">同步来源会刷新该 source 的 lastSyncedAt；启停状态会影响全局 ingestion 是否包含它。</div>' +
-        '</article>' +
-        '<article class="detail-card">' +
+          hintMarker('下面的发布列表仍然保留，用来从来源阶段顺手切到发布筛选视角。') +
           '<div class="detail-kicker">最近发布筛选</div>' +
-          '<div class="detail-note">下面的发布列表仍然保留，用来从来源阶段顺手切到发布筛选视角。</div>' +
+          '<div class="meta">用来快速切到发布筛选视角。</div>' +
         '</article>';
     }
 
     function render(data) {
+      hideHint();
       latestVisualization = data;
       syncSelectedTopic(data);
       syncSelectedDraft(data);
       syncSelectedReview(data);
       syncSelectedPublish(data);
+      syncSelectedJob(data);
       syncSelectedSource(data);
       renderStageNav(data);
       const overview = data.overview;
@@ -1397,7 +1985,8 @@ export function renderDashboardPage(): string {
         pill('草稿 ' + data.drafts.length, 'ok'),
         pill('审核 ' + totals.reviewsCount, 'ok'),
         pill('发布 ' + data.publishes.length, 'ok'),
-        pill('指标 ' + totals.totalViews + ' views', 'warn')
+        pill('任务 ' + data.jobs.length, data.jobs.some((job) => job.status === 'failed') ? 'hot' : 'ok'),
+        pill('指标 ' + totals.totalViews + ' 浏览', 'warn')
       ].join('');
 
       $('metrics').innerHTML = [
@@ -1422,24 +2011,24 @@ export function renderDashboardPage(): string {
       ).join('');
 
       $('platforms').innerHTML = data.platformBreakdown.map((item) =>
-        '<button class="platform" type="button" data-platform-card="' + esc(item.platform) + '" aria-label="筛选平台 ' + esc(item.platform) + '"><div class="platform-name"><span>' + esc(item.platform) + '</span>' + pill(item.published + '/' + item.publishTasks, item.failed ? 'hot' : 'ok') + '</div><div class="meta">浏览 ' + esc(item.views) + ' · 点赞 ' + esc(item.likes) + ' · 评论 ' + esc(item.comments) + '</div><div class="bar"><div class="fill" style="width:' + (item.publishTasks ? Math.round((item.published / item.publishTasks) * 100) : 0) + '%"></div></div></button>'
+        '<button class="platform" type="button" data-platform-card="' + esc(item.platform) + '" aria-label="筛选平台 ' + esc(platformLabel(item.platform)) + '"><div class="platform-name"><span>' + esc(platformLabel(item.platform)) + '</span>' + pill(item.published + '/' + item.publishTasks, item.failed ? 'hot' : 'ok') + '</div><div class="meta">浏览 ' + esc(item.views) + ' · 点赞 ' + esc(item.likes) + ' · 评论 ' + esc(item.comments) + '</div><div class="bar"><div class="fill" style="width:' + (item.publishTasks ? Math.round((item.published / item.publishTasks) * 100) : 0) + '%"></div></div></button>'
       ).join('');
       renderOverviewDetail(data);
 
       $('topics').innerHTML = renderRows(data.topics, (topic) =>
-        '<button class="row interactive-row topic-row' + (topic.id === selectedTopicId ? ' active' : '') + '" type="button" data-topic-id="' + esc(topic.id) + '" aria-label="查看选题 ' + esc(topic.title) + '"><div><div class="title">' + esc(topic.title) + '</div><div class="meta">' + esc(topic.angle || '暂无角度') + ' · 热度 ' + esc(topic.score) + ' · 候选素材 ' + esc(topic.normalizedItemCount) + '</div></div>' + pill(topic.status, topic.status === 'selected' ? 'ok' : 'warn') + '</button>',
+        '<button class="row interactive-row topic-row' + (topic.id === selectedTopicId ? ' active' : '') + '" type="button" data-topic-id="' + esc(topic.id) + '" aria-label="查看选题 ' + esc(topic.title) + '"><div><div class="title">' + esc(topic.title) + '</div><div class="meta">' + esc(topic.angle || '暂无角度') + ' · 热度 ' + esc(topic.score) + ' · 候选素材 ' + esc(topic.normalizedItemCount) + '</div></div>' + pill(topicStatusLabel(topic.status), topic.status === 'selected' ? 'ok' : 'warn') + '</button>',
         '还没有选题数据。点击“运行 Demo”生成一组样例。'
       );
       renderTopicDetail(data);
 
       $('drafts').innerHTML = renderRows(data.drafts, (draft) =>
-        '<button class="row interactive-row draft-row' + (draft.id === selectedDraftId ? ' active' : '') + '" type="button" data-draft-id="' + esc(draft.id) + '" aria-label="查看草稿 ' + esc(draft.title) + '"><div><div class="title">' + esc(draft.title) + '</div><div class="meta">' + esc(draft.draftType) + ' · 素材 ' + esc(draft.assetCount) + ' · 平台版本 ' + esc(draft.variantCount) + ' · 引用 ' + esc(draft.sourceRefCount) + '</div></div>' + pill(draft.reviewStatus || draft.status, draft.reviewStatus === 'approved' ? 'ok' : 'warn') + '</button>',
+        '<button class="row interactive-row draft-row' + (draft.id === selectedDraftId ? ' active' : '') + '" type="button" data-draft-id="' + esc(draft.id) + '" aria-label="查看草稿 ' + esc(draft.title) + '"><div><div class="title">' + esc(draft.title) + '</div><div class="meta">' + esc(draftTypeLabel(draft.draftType)) + ' · 素材 ' + esc(draft.assetCount) + ' · 平台版本 ' + esc(draft.variantCount) + ' · 引用 ' + esc(draft.sourceRefCount) + '</div></div>' + pill(draft.reviewStatus ? reviewStatusLabel(draft.reviewStatus) : draftStatusLabel(draft.status), draft.reviewStatus === 'approved' ? 'ok' : 'warn') + '</button>',
         '还没有图文草稿。'
       );
       renderDraftDetail(data);
 
       $('reviews').innerHTML = renderRows(data.reviews, (review) =>
-        '<button class="row interactive-row review-row' + (review.id === selectedReviewId ? ' active' : '') + '" type="button" data-review-id="' + esc(review.id) + '" aria-label="查看审核任务 ' + esc(review.draftTitle) + '"><div><div class="title">' + esc(review.draftTitle) + '</div><div class="meta">' + esc(review.draftType) + ' · 平台 ' + esc(review.availablePlatforms.join(', ') || 'none') + '</div></div>' + pill(review.status, review.status === 'approved' ? 'ok' : review.status === 'rejected' ? 'hot' : 'warn') + '</button>',
+        '<button class="row interactive-row review-row' + (review.id === selectedReviewId ? ' active' : '') + '" type="button" data-review-id="' + esc(review.id) + '" aria-label="查看审核任务 ' + esc(review.draftTitle) + '"><div><div class="title">' + esc(review.draftTitle) + '</div><div class="meta">' + esc(draftTypeLabel(review.draftType)) + ' · 平台 ' + esc((review.availablePlatforms.map(platformLabel)).join('、') || '无') + '</div></div>' + pill(reviewStatusLabel(review.status), review.status === 'approved' ? 'ok' : review.status === 'rejected' ? 'hot' : 'warn') + '</button>',
         '还没有审核任务。'
       );
       renderReviewDetail(data);
@@ -1447,24 +2036,30 @@ export function renderDashboardPage(): string {
       $('publishWorkbench').innerHTML = renderRows(listPublishEntries(data), (entry) => {
         if (entry.kind === 'candidate') {
           const candidate = entry.item;
-          return '<button class="row interactive-row publish-row' + (entry.key === selectedPublishKey ? ' active' : '') + '" type="button" data-publish-key="' + esc(entry.key) + '" aria-label="查看待创建发布 ' + esc(candidate.draftTitle) + '"><div><div class="title">' + esc(candidate.draftTitle) + '</div><div class="meta">' + esc(candidate.draftType) + ' · ' + esc(candidate.platform) + ' · 还未建任务</div></div>' + pill('待创建', 'warn') + '</button>';
+          return '<button class="row interactive-row publish-row' + (entry.key === selectedPublishKey ? ' active' : '') + '" type="button" data-publish-key="' + esc(entry.key) + '" aria-label="查看待创建发布 ' + esc(candidate.draftTitle) + '"><div><div class="title">' + esc(candidate.draftTitle) + '</div><div class="meta">' + esc(draftTypeLabel(candidate.draftType)) + ' · ' + esc(platformLabel(candidate.platform)) + ' · 还未建任务</div></div>' + pill('待创建', 'warn') + '</button>';
         }
 
         const task = entry.item;
-        return '<button class="row interactive-row publish-row' + (entry.key === selectedPublishKey ? ' active' : '') + '" type="button" data-publish-key="' + esc(entry.key) + '" aria-label="查看发布任务 ' + esc(task.draftTitle || task.id) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(task.platform) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>';
+        return '<button class="row interactive-row publish-row' + (entry.key === selectedPublishKey ? ' active' : '') + '" type="button" data-publish-key="' + esc(entry.key) + '" aria-label="查看发布任务 ' + esc(task.draftTitle || task.id) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(platformLabel(task.platform)) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(publishStatusLabel(task.status), task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>';
       }, filterFields.publishStatus.value
         ? '当前发布状态筛选下没有发布任务。清空发布状态后，也会重新看到待创建候选。'
         : '还没有发布任务，也没有待创建候选。');
       renderPublishDetail(data);
 
+      $('jobs').innerHTML = renderRows(data.jobs, (job) =>
+        '<button class="row interactive-row job-row' + (job.id === selectedJobId ? ' active' : '') + '" type="button" data-job-id="' + esc(job.id) + '" aria-label="查看任务 ' + esc(job.id) + '"><div><div class="title">' + esc(jobTypeLabel(job.jobType)) + '</div><div class="meta">' + esc(jobStatusLabel(job.status)) + ' · 创建于 ' + esc(job.createdAt) + '</div></div>' + pill(jobStatusLabel(job.status), job.status === 'succeeded' ? 'ok' : job.status === 'failed' ? 'hot' : 'warn') + '</button>',
+        '当前还没有后台任务。'
+      );
+      renderJobDetail(data);
+
       $('sources').innerHTML = renderRows(data.sources, (source) =>
-        '<button class="row interactive-row source-row' + (source.id === selectedSourceId ? ' active' : '') + '" type="button" data-source-id="' + esc(source.id) + '" aria-label="查看来源 ' + esc(source.name) + '"><div><div class="title">' + esc(source.name) + '</div><div class="meta">' + esc(source.type) + ' · ' + esc(source.platform) + ' · 最近同步 ' + esc(source.lastSyncedAt || 'never') + '</div></div>' + pill(source.status, source.status === 'active' ? 'ok' : '') + '</button>',
+        '<button class="row interactive-row source-row' + (source.id === selectedSourceId ? ' active' : '') + '" type="button" data-source-id="' + esc(source.id) + '" aria-label="查看来源 ' + esc(source.name) + '"><div><div class="title">' + esc(source.name) + '</div><div class="meta">' + esc(sourceTypeLabel(source.type)) + ' · ' + esc(platformLabel(source.platform)) + ' · 原始内容 ' + esc(source.rawItemsCount) + ' 条 · 最近同步 ' + esc(source.lastSyncedAt || '从未同步') + '</div></div>' + pill(sourceStatusLabel(source.status), source.status === 'active' ? 'ok' : '') + '</button>',
         '还没有信息源。'
       );
       renderSourceDetail(data);
 
       $('publishes').innerHTML = renderRows(data.publishes.slice(0, 10), (task) =>
-        '<button class="row interactive-row" type="button" data-publish-platform="' + esc(task.platform) + '" data-publish-status="' + esc(task.status) + '" aria-label="筛选发布 ' + esc(task.platform + ' ' + task.status) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(task.platform) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(task.status, task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>',
+        '<button class="row interactive-row" type="button" data-publish-platform="' + esc(task.platform) + '" data-publish-status="' + esc(task.status) + '" aria-label="筛选发布 ' + esc(platformLabel(task.platform) + ' ' + publishStatusLabel(task.status)) + '"><div><div class="title">' + esc(task.draftTitle || task.id) + '</div><div class="meta">' + esc(platformLabel(task.platform)) + ' · ' + esc(task.remotePostId || '未产生远端 ID') + '</div></div>' + pill(publishStatusLabel(task.status), task.status === 'published' ? 'ok' : task.status === 'failed' ? 'hot' : 'warn') + '</button>',
         '还没有发布记录。'
       );
     }
@@ -1503,8 +2098,31 @@ export function renderDashboardPage(): string {
           method: 'POST'
         });
         if (!response.ok) throw new Error(await describeError(response, '运行采集失败'));
+        const result = await response.json();
+        selectedJobId = result.jobId || selectedJobId;
         await load();
-        showFeedback('ok', '操作完成', '全局 ingestion 已触发，来源同步时间和总览指标已刷新。');
+        showFeedback('ok', '操作完成', '采集任务已入队。等 worker 执行后，来源同步时间和总览指标会更新。');
+      } finally {
+        clearBusy();
+      }
+    }
+
+    async function mutateJob(jobId, action) {
+      setBusy('job:' + action, '正在执行后台任务...');
+      try {
+        let response;
+        if (action === 'run') {
+          response = await fetch(apiRoot + '/jobs/' + encodeURIComponent(jobId) + '/run', {
+            method: 'POST'
+          });
+        } else {
+          throw new Error('未知任务操作');
+        }
+
+        if (!response.ok) throw new Error(await describeError(response, '任务操作失败'));
+        selectedJobId = jobId;
+        await load();
+        showFeedback('ok', '操作完成', '后台任务已执行完成。');
       } finally {
         clearBusy();
       }
@@ -1519,7 +2137,7 @@ export function renderDashboardPage(): string {
         if (!response.ok) throw new Error(await describeError(response, '选题操作失败'));
         selectedTopicId = topicId;
         await load();
-        showFeedback('ok', '操作完成', action === 'select' ? '选题已设为 selected。' : '选题已设为 rejected。');
+        showFeedback('ok', '操作完成', action === 'select' ? '选题已设为已选中。' : '选题已设为已拒绝。');
       } finally {
         clearBusy();
       }
@@ -1628,6 +2246,39 @@ export function renderDashboardPage(): string {
       return prefix + '-' + id + '-' + Date.now();
     }
 
+    function setSourceEditorMode(mode) {
+      sourceEditorMode = mode === 'create' ? 'create' : 'edit';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    }
+
+    function readSourceEditorPayload(form) {
+      const formData = new FormData(form);
+      const name = String(formData.get('name') || '').trim();
+      const type = String(formData.get('type') || '').trim();
+      const platform = String(formData.get('platform') || '').trim();
+      const status = String(formData.get('status') || '').trim();
+      const configRaw = String(formData.get('config') || '').trim();
+
+      if (!name) {
+        throw new Error('请先填写来源名称。');
+      }
+
+      let config;
+      try {
+        config = configRaw ? JSON.parse(configRaw) : {};
+      } catch (error) {
+        throw new Error('配置 JSON 解析失败，请检查逗号、引号和括号。');
+      }
+
+      if (!config || Array.isArray(config) || typeof config !== 'object') {
+        throw new Error('配置 JSON 需要是一个对象，例如 {"endpoint":""}。');
+      }
+
+      return { name, type, platform, status, config };
+    }
+
     async function mutatePublish(action, payload) {
       setBusy('publish:' + action, '正在执行发布操作...');
       let response;
@@ -1694,15 +2345,33 @@ export function renderDashboardPage(): string {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: payload.nextStatus })
           });
+        } else if (action === 'create') {
+          response = await fetch(apiRoot + '/sources', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else if (action === 'update') {
+          response = await fetch(apiRoot + '/sources/' + encodeURIComponent(sourceId), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
         } else {
           throw new Error('未知来源操作');
         }
 
         if (!response.ok) throw new Error(await describeError(response, '来源操作失败'));
-        selectedSourceId = sourceId;
+        const result = action === 'sync' ? null : await response.json();
+        selectedSourceId = result?.id || sourceId;
+        sourceEditorMode = 'edit';
         await load();
         if (action === 'sync') {
           showFeedback('ok', '操作完成', '来源已同步。');
+        } else if (action === 'create') {
+          showFeedback('ok', '操作完成', '新来源已创建。');
+        } else if (action === 'update') {
+          showFeedback('ok', '操作完成', '来源配置已更新。');
         } else {
           showFeedback('ok', '操作完成', payload.nextStatus === 'active' ? '来源已启用。' : '来源已停用。');
         }
@@ -1712,6 +2381,7 @@ export function renderDashboardPage(): string {
     }
 
     $('applyFiltersBtn').addEventListener('click', () => {
+      hideHint();
       applyFilters(true);
       renderFilterSummary();
       load().catch((error) => {
@@ -1722,9 +2392,11 @@ export function renderDashboardPage(): string {
     stageNav.addEventListener('click', (event) => {
       const button = event.target.closest('[data-stage-key]');
       if (!button || isBusy) return;
+      hideHint();
       setActiveStage(button.getAttribute('data-stage-key') || 'overview', true);
     });
     $('resetFiltersBtn').addEventListener('click', () => {
+      hideHint();
       Object.values(filterFields).forEach((element) => {
         if (element) element.value = '';
       });
@@ -1736,12 +2408,53 @@ export function renderDashboardPage(): string {
       });
     });
     $('refreshBtn').addEventListener('click', () => {
+      hideHint();
       clearFeedback();
       load().catch((error) => {
         showFeedback('error', '读取失败', error.message);
         setStatus(error.message);
       });
     });
+    document.addEventListener('mouseover', (event) => {
+      const trigger = event.target.closest('[data-hint-text]');
+      if (!trigger) return;
+      showHint(trigger);
+    });
+    document.addEventListener('mouseout', (event) => {
+      const trigger = event.target.closest('[data-hint-text]');
+      if (!trigger || trigger !== activeHintTrigger) return;
+      const next = event.relatedTarget;
+      if (next && trigger.contains(next)) return;
+      hideHint();
+    });
+    document.addEventListener('focusin', (event) => {
+      const trigger = event.target.closest('[data-hint-text]');
+      if (!trigger) return;
+      showHint(trigger);
+    });
+    document.addEventListener('focusout', () => {
+      const next = document.activeElement && document.activeElement.closest
+        ? document.activeElement.closest('[data-hint-text]')
+        : null;
+      if (!next) {
+        hideHint();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        hideHint();
+      }
+    });
+    window.addEventListener('resize', () => {
+      if (activeHintTrigger) {
+        positionHint(activeHintTrigger);
+      }
+    });
+    window.addEventListener('scroll', () => {
+      if (activeHintTrigger) {
+        positionHint(activeHintTrigger);
+      }
+    }, true);
     $('demoBtn').addEventListener('click', () => runDemo().catch((error) => {
       showFeedback('error', '操作失败', error.message);
       setStatus(error.message);
@@ -1774,6 +2487,10 @@ export function renderDashboardPage(): string {
       }
       if (action === 'go-publish') {
         setActiveStage('publish', true);
+        return;
+      }
+      if (action === 'go-jobs') {
+        setActiveStage('jobs', true);
       }
     });
     filterSummary.addEventListener('click', (event) => {
@@ -1825,13 +2542,26 @@ export function renderDashboardPage(): string {
         render(latestVisualization);
       }
     });
+    $('jobs').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-job-id]');
+      if (!button) return;
+      selectedJobId = button.getAttribute('data-job-id') || '';
+      if (latestVisualization) {
+        render(latestVisualization);
+      }
+    });
     $('sources').addEventListener('click', (event) => {
       const button = event.target.closest('[data-source-id]');
       if (!button) return;
+      sourceEditorMode = 'edit';
       selectedSourceId = button.getAttribute('data-source-id') || '';
       if (latestVisualization) {
         render(latestVisualization);
       }
+    });
+    $('createSourceBtn').addEventListener('click', () => {
+      if (isBusy) return;
+      setSourceEditorMode('create');
     });
     $('publishes').addEventListener('click', (event) => {
       const button = event.target.closest('[data-publish-status]');
@@ -1909,18 +2639,70 @@ export function renderDashboardPage(): string {
         setStatus(error.message);
       });
     });
+    jobDetail.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-job-action]');
+      if (!button) return;
+      const action = button.getAttribute('data-job-action');
+      const jobId = button.getAttribute('data-job-id');
+      if (!action || !jobId) return;
+      mutateJob(jobId, action).catch((error) => {
+        showFeedback('error', '操作失败', error.message);
+        setStatus(error.message);
+      });
+    });
     sourceDetail.addEventListener('click', (event) => {
+      const modeButton = event.target.closest('[data-source-editor-mode]');
+      if (modeButton) {
+        setSourceEditorMode(modeButton.getAttribute('data-source-editor-mode') || 'edit');
+        return;
+      }
+
       const button = event.target.closest('[data-source-action]');
       if (!button) return;
       const sourceId = button.getAttribute('data-source-id');
       const action = button.getAttribute('data-source-action');
-      if (!sourceId || !action) return;
+      if (!action) return;
+      if (action === 'cancel-editor') {
+        sourceEditorMode = 'edit';
+        if (latestVisualization) {
+          render(latestVisualization);
+        }
+        return;
+      }
+      if (!sourceId) return;
       mutateSource(sourceId, action, {
         nextStatus: button.getAttribute('data-next-status') || undefined,
       }).catch((error) => {
         showFeedback('error', '操作失败', error.message);
         setStatus(error.message);
       });
+    });
+    sourceDetail.addEventListener('submit', (event) => {
+      const form = event.target.closest('[data-source-editor-form]');
+      if (!form) return;
+      event.preventDefault();
+      try {
+        const payload = readSourceEditorPayload(form);
+        const mode = form.getAttribute('data-mode') || 'edit';
+        const sourceId = form.getAttribute('data-source-id') || '';
+        if (mode === 'create') {
+          mutateSource('', 'create', payload).catch((error) => {
+            showFeedback('error', '操作失败', error.message);
+            setStatus(error.message);
+          });
+          return;
+        }
+        if (!sourceId) {
+          throw new Error('当前没有可编辑的来源。');
+        }
+        mutateSource(sourceId, 'update', payload).catch((error) => {
+          showFeedback('error', '操作失败', error.message);
+          setStatus(error.message);
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '来源表单读取失败';
+        showFeedback('error', '表单有误', message);
+      }
     });
     syncFiltersFromLocation();
     syncStageFromLocation();
