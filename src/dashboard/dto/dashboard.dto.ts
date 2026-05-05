@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
 import { DraftStatus, DraftType, PlatformType, PublishStatus, ReviewStatus, SourceStatus, SourceType, TopicStatus } from '../../common/enums/workflow.enums';
 
 export class DashboardOverviewQueryDto {
@@ -148,6 +148,56 @@ export class DashboardTopicSummaryDto {
   @IsInt()
   @Min(0)
   normalizedItemCount!: number;
+
+  @IsString()
+  createdAt!: string;
+
+  @IsInt()
+  @Min(0)
+  sourceCount!: number;
+
+  @IsArray()
+  platforms!: string[];
+
+  @IsArray()
+  sourceNames!: string[];
+
+  @IsArray()
+  hotKeywords!: string[];
+
+  @IsArray()
+  candidateItems!: DashboardTopicCandidateDto[];
+
+  @IsString()
+  recommendation!: string;
+}
+
+export class DashboardTopicCandidateDto {
+  @IsString()
+  id!: string;
+
+  @IsBoolean()
+  isPrimary!: boolean;
+
+  @IsString()
+  title!: string;
+
+  @IsOptional()
+  @IsString()
+  summary?: string;
+
+  @IsOptional()
+  @IsString()
+  fullText?: string;
+
+  @IsString()
+  sourceName!: string;
+
+  @IsString()
+  platform!: string;
+
+  @IsArray()
+  keywords!: string[];
 }
 
 export class DashboardDraftSummaryDto {
@@ -210,6 +260,31 @@ export class DashboardReviewSummaryDto {
   @IsOptional()
   @IsString()
   rejectedAt?: string;
+
+  @IsArray()
+  variants!: DashboardReviewVariantSummaryDto[];
+}
+
+export class DashboardReviewVariantSummaryDto {
+  @IsString()
+  id!: string;
+
+  @IsString()
+  platform!: PlatformType;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  caption?: string;
+
+  @IsArray()
+  hashtags!: string[];
+
+  @IsString()
+  status!: string;
 }
 
 export class DashboardPublishSummaryDto {

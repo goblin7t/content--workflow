@@ -8,4 +8,5 @@ export const JOB_STATUS = {
 
 export const JOB_TYPE = {
   INGESTION_RUN_ALL_SOURCES: 'ingestion.run_all_sources',
+  METRICS_SYNC_ALL: 'metrics.sync_all',
 } as const;

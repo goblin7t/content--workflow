@@ -16,11 +16,14 @@ export class TopicsService {
     const targetCount = body.targetSummaryCount + body.targetDeepCount;
     const candidates = await this.store.listLatestNormalizedItems(targetCount);
     const nextItems: TopicDto[] = [];
+    const minRelatedItems = Math.min(3, candidates.length);
+    const maxRelatedItems = Math.min(10, candidates.length);
 
     for (const [index, item] of candidates.entries()) {
       const rawItem = await this.store.getRawItem(item.rawItemId);
       const title = item.cleanTitle ?? rawItem?.title ?? `Generated topic ${index + 1}`;
       const now = nowIso();
+      const relatedItems = this.pickRelatedItems(candidates, index, minRelatedItems, maxRelatedItems);
 
       const topic = await this.store.createTopic({
         id: newId(),
@@ -31,15 +34,14 @@ export class TopicsService {
         score: 100 - index,
         status: TopicStatus.CANDIDATE,
         clusterPayload: {
-          normalizedItemIds: [item.id],
-          sourceRefCandidates: [
-            {
-              normalizedItemId: item.id,
-              rawItemId: item.rawItemId,
-            },
-          ],
+          primaryNormalizedItemId: item.id,
+          normalizedItemIds: relatedItems.map((related) => related.id),
+          sourceRefCandidates: relatedItems.map((related) => ({
+            normalizedItemId: related.id,
+            rawItemId: related.rawItemId,
+          })),
         },
-        normalizedItemIds: [item.id],
+        normalizedItemIds: relatedItems.map((related) => related.id),
         createdAt: now,
         updatedAt: now,
       });
@@ -47,6 +49,30 @@ export class TopicsService {
     }
 
     return { items: nextItems };
+  }
+
+  private pickRelatedItems(items: Array<{ id: string; rawItemId: string }>, index: number, minCount: number, maxCount: number) {
+    if (!items.length) {
+      return [];
+    }
+
+    const targetCount = Math.max(minCount, Math.min(maxCount, minCount + (index % Math.max(1, maxCount - minCount + 1))));
+    const selected = [items[index]];
+    let offset = 1;
+
+    while (selected.length < targetCount && selected.length < items.length) {
+      const left = items[index - offset];
+      const right = items[index + offset];
+      if (left) {
+        selected.push(left);
+      }
+      if (selected.length < targetCount && right) {
+        selected.push(right);
+      }
+      offset += 1;
+    }
+
+    return selected.slice(0, targetCount);
   }
 
   async getTopic(topicId: string): Promise<TopicDto> {

@@ -624,7 +624,20 @@ export class WorkflowStoreFake {
 
   async updateContentJob(jobId: string, body: Partial<ContentJobDto>): Promise<ContentJobDto> {
     const job = await this.getContentJob(jobId);
-    Object.assign(job, body);
+    const next = { ...body } as Record<string, unknown>;
+    if (next.errorMessage === null) {
+      delete job.errorMessage;
+      delete next.errorMessage;
+    }
+    if (next.startedAt === null) {
+      delete job.startedAt;
+      delete next.startedAt;
+    }
+    if (next.finishedAt === null) {
+      delete job.finishedAt;
+      delete next.finishedAt;
+    }
+    Object.assign(job, next);
     return job;
   }
 

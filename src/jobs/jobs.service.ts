@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { JobAcceptedResponseDto } from '../common/dto/common.dto';
 import { WorkflowStoreService } from '../common/services/workflow-store.service';
 import { CreateJobDto, ContentJobDto, ContentJobListResponseDto, ListJobsQueryDto } from './dto/job.dto';
@@ -33,6 +33,20 @@ export class JobsService {
 
   async updateJob(jobId: string, body: Partial<ContentJobDto>): Promise<ContentJobDto> {
     return this.store.updateContentJob(jobId, body);
+  }
+
+  async retryJob(jobId: string): Promise<ContentJobDto> {
+    const job = await this.getJob(jobId);
+    if (job.status !== JOB_STATUS.FAILED) {
+      throw new ConflictException(`Only failed jobs can be retried (received: ${job.status})`);
+    }
+
+    return this.store.updateContentJob(jobId, {
+      status: JOB_STATUS.QUEUED,
+      errorMessage: null,
+      startedAt: null,
+      finishedAt: null,
+    });
   }
 
   async getNextQueuedJob(jobType?: string): Promise<ContentJobDto | null> {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DraftType, PlatformType, PublishStatus } from '../common/enums/workflow.enums';
+import { DraftType, PlatformType, PublishStatus, TopicStatus } from '../common/enums/workflow.enums';
 import { WorkflowStoreService } from '../common/services/workflow-store.service';
 import { DashboardOverviewDto, DashboardOverviewQueryDto, DashboardVisualizationDto } from './dto/dashboard.dto';
 
@@ -29,6 +29,9 @@ export class DashboardService {
   async getVisualization(query: DashboardOverviewQueryDto): Promise<DashboardVisualizationDto> {
     const data = await this.buildDashboardDataset(query);
     const overview = this.toOverview(data, query);
+    const rawItemById = new Map(data.rawItems.map((item) => [item.id, item]));
+    const normalizedItemById = new Map(data.normalizedItems.map((item) => [item.id, item]));
+    const sourceById = new Map(data.sources.map((source) => [source.id, source]));
 
     const metricsByPlatform = new Map<PlatformType, { views: number; likes: number; comments: number }>();
     for (const metric of data.metrics) {
@@ -86,6 +89,14 @@ export class DashboardService {
         scheduledAt: task.scheduledAt,
         approvedAt: task.approvedAt,
         rejectedAt: task.rejectedAt,
+        variants: variants.map((variant) => ({
+          id: variant.id,
+          platform: variant.platform,
+          title: variant.title,
+          caption: variant.caption,
+          hashtags: variant.hashtags,
+          status: variant.status,
+        })),
       };
     });
 
@@ -152,13 +163,8 @@ export class DashboardService {
         rawItemsCount: data.rawItems.filter((item) => item.sourceId === source.id).length,
       })),
       topics: data.topics.map((topic) => ({
+        ...this.toTopicSummary(topic, normalizedItemById, rawItemById, sourceById),
         id: topic.id,
-        title: topic.title,
-        angle: topic.angle,
-        summary: topic.summary,
-        score: topic.score,
-        status: topic.status,
-        normalizedItemCount: this.getTopicNormalizedItemIds(topic).length,
       })),
       drafts: draftSummaries,
       reviews: reviewSummaries,
@@ -262,6 +268,11 @@ export class DashboardService {
         return true;
       }
 
+      const primaryItemId = this.getPrimaryTopicNormalizedItemId(topic);
+      if (primaryItemId) {
+        return normalizedItemsBySourceIds.has(primaryItemId);
+      }
+
       return this.getTopicNormalizedItemIds(topic).some((itemId) => normalizedItemsBySourceIds.has(itemId));
     });
     const topicIds = new Set(topics.map((topic) => topic.id));
@@ -340,8 +351,148 @@ export class DashboardService {
       : undefined;
   }
 
+  private toTopicSummary(
+    topic: {
+      id: string;
+      title: string;
+      angle?: string | null;
+      summary?: string | null;
+      score: number;
+      status: TopicStatus;
+      createdAt: string;
+      clusterPayload: Record<string, unknown>;
+    },
+    normalizedItemById: Map<string, { rawItemId: string; keywords: string[]; cleanTitle?: string; cleanText?: string; summary?: string }>,
+    rawItemById: Map<string, { sourceId: string; title?: string; rawText?: string }>,
+    sourceById: Map<string, { name: string; platform: string }>,
+  ) {
+    const normalizedItemIds = this.getTopicNormalizedItemIds(topic);
+    const primaryNormalizedItemId = this.getPrimaryTopicNormalizedItemId(topic);
+    const sourceIds = new Set<string>();
+    const platforms = new Set<string>();
+    const sourceNames = new Set<string>();
+    const keywordWeights = new Map<string, number>();
+    const candidateItems: Array<{
+      id: string;
+      isPrimary: boolean;
+      title: string;
+      summary?: string;
+      fullText?: string;
+      sourceName: string;
+      platform: string;
+      keywords: string[];
+    }> = [];
+
+    for (const normalizedItemId of normalizedItemIds) {
+      const normalizedItem = normalizedItemById.get(normalizedItemId);
+      if (!normalizedItem) {
+        continue;
+      }
+
+      const rawItem = rawItemById.get(normalizedItem.rawItemId);
+      if (!rawItem) {
+        continue;
+      }
+
+      sourceIds.add(rawItem.sourceId);
+      const source = sourceById.get(rawItem.sourceId);
+      if (source?.platform) {
+        platforms.add(source.platform);
+      }
+      if (source?.name) {
+        sourceNames.add(source.name);
+      }
+
+      for (const keyword of normalizedItem.keywords ?? []) {
+        const normalizedKeyword = this.normalizeTopicKeyword(keyword);
+        if (!normalizedKeyword) {
+          continue;
+        }
+
+        keywordWeights.set(normalizedKeyword, (keywordWeights.get(normalizedKeyword) ?? 0) + 1);
+      }
+
+      candidateItems.push({
+        id: normalizedItemId,
+        isPrimary: normalizedItemId === primaryNormalizedItemId,
+        title: normalizedItem.cleanTitle || rawItem.title || '未命名素材',
+        summary: normalizedItem.summary || rawItem.rawText?.slice(0, 120),
+        fullText: normalizedItem.cleanText || rawItem.rawText,
+        sourceName: source?.name || '未知来源',
+        platform: source?.platform || 'unknown',
+        keywords: (normalizedItem.keywords || []).slice(0, 5),
+      });
+    }
+
+    const platformList = Array.from(platforms);
+    const hotKeywords = [...keywordWeights.entries()]
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .slice(0, 5)
+      .map(([keyword]) => keyword);
+    return {
+      id: topic.id,
+      title: topic.title,
+      angle: topic.angle ?? undefined,
+      summary: topic.summary ?? undefined,
+      score: topic.score,
+      status: topic.status,
+      normalizedItemCount: normalizedItemIds.length,
+      createdAt: topic.createdAt,
+      sourceCount: sourceIds.size,
+      platforms: platformList,
+      sourceNames: Array.from(sourceNames).slice(0, 5),
+      hotKeywords,
+      candidateItems: candidateItems.slice(0, 10),
+      recommendation: this.buildTopicRecommendation(topic.score, sourceIds.size, platformList.length, normalizedItemIds.length),
+    };
+  }
+
+  private buildTopicRecommendation(
+    score: number,
+    sourceCount: number,
+    platformCount: number,
+    normalizedItemCount: number,
+  ): string {
+    if (score >= 98) {
+      return '热度高，建议优先看';
+    }
+
+    if (platformCount >= 3) {
+      return '跨平台都有动静，值得跟进';
+    }
+
+    if (sourceCount >= 3) {
+      return '来源较多，信息更完整';
+    }
+
+    if (normalizedItemCount >= 3) {
+      return '素材集中，适合快速出稿';
+    }
+
+    return '信息明确，可以继续判断';
+  }
+
+  private normalizeTopicKeyword(keyword: string): string | null {
+    const normalized = keyword.trim().toLowerCase();
+    if (!normalized || normalized.length < 2) {
+      return null;
+    }
+
+    const ignored = new Set(['the', 'and', 'for', 'with', 'from', 'into', 'this', 'that', 'are', 'was', 'will']);
+    if (ignored.has(normalized)) {
+      return null;
+    }
+
+    return normalized;
+  }
+
   private getTopicNormalizedItemIds(topic: { clusterPayload: Record<string, unknown> }): string[] {
     const ids = topic.clusterPayload.normalizedItemIds;
     return Array.isArray(ids) ? ids.filter((value): value is string => typeof value === 'string') : [];
+  }
+
+  private getPrimaryTopicNormalizedItemId(topic: { clusterPayload: Record<string, unknown> }): string | undefined {
+    const value = topic.clusterPayload.primaryNormalizedItemId;
+    return typeof value === 'string' ? value : undefined;
   }
 }

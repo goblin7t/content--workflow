@@ -976,7 +976,14 @@ export class WorkflowStoreService {
     return this.mapContentJob(job);
   }
 
-  async updateContentJob(jobId: string, body: Partial<ContentJobDto>): Promise<ContentJobDto> {
+  async updateContentJob(
+    jobId: string,
+    body: Partial<ContentJobDto> & {
+      startedAt?: string | null;
+      finishedAt?: string | null;
+      errorMessage?: string | null;
+    },
+  ): Promise<ContentJobDto> {
     const job = await this.prisma.contentJob.update({
       where: { id: jobId },
       data: {

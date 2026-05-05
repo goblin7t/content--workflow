@@ -2,12 +2,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { JobsService } from '../src/jobs/jobs.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { WorkflowStoreService } from '../src/common/services/workflow-store.service';
 import { WorkflowStoreFake } from './fakes/workflow-store.fake';
 
 describe('DemoController (e2e)', () => {
   let app: any;
+  let jobsService: JobsService;
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('DemoController (e2e)', () => {
       }),
     );
     await app.init();
+    jobsService = app.get(JobsService);
   });
 
   afterAll(async () => {
@@ -172,6 +175,89 @@ describe('DemoController (e2e)', () => {
     expect(visualization.body.jobs[0].status).toBe('succeeded');
   });
 
+  it('queues metrics sync and executes it through the jobs API', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/demo/run')
+      .send({
+        resetStore: true,
+        topicDate: '2025-02-14',
+      })
+      .expect(201);
+
+    const accepted = await request(app.getHttpServer())
+      .post('/api/v1/metrics/sync')
+      .expect(201);
+
+    expect(accepted.body.status).toBe('queued');
+
+    const queuedJob = await request(app.getHttpServer())
+      .get('/api/v1/jobs/' + accepted.body.jobId)
+      .expect(200);
+
+    expect(queuedJob.body.jobType).toBe('metrics.sync_all');
+    expect(queuedJob.body.status).toBe('queued');
+
+    const completed = await request(app.getHttpServer())
+      .post('/api/v1/jobs/' + accepted.body.jobId + '/run')
+      .expect(201);
+
+    expect(completed.body.status).toBe('succeeded');
+
+    const metrics = await request(app.getHttpServer())
+      .get('/api/v1/metrics')
+      .expect(200);
+
+    expect(metrics.body.items.length).toBeGreaterThan(16);
+  });
+
+  it('updates review-stage publish content through channel variants', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/demo/run')
+      .send({
+        resetStore: true,
+        topicDate: '2025-02-14',
+      })
+      .expect(201);
+
+    const visualization = await request(app.getHttpServer())
+      .get('/api/v1/dashboard/visualization')
+      .expect(200);
+
+    const variant = visualization.body.reviews[0].variants[0];
+    expect(variant).toBeTruthy();
+
+    const updated = await request(app.getHttpServer())
+      .patch('/api/v1/channel-variants/' + variant.id)
+      .send({
+        title: '审核后定稿标题',
+        caption: '审核阶段已手动修正文案。',
+        hashtags: ['#审核', '#定稿'],
+      })
+      .expect(200);
+
+    expect(updated.body.title).toBe('审核后定稿标题');
+    expect(updated.body.caption).toContain('修正');
+    expect(updated.body.hashtags).toEqual(['#审核', '#定稿']);
+  });
+
+  it('retries a failed job through the jobs API', async () => {
+    const accepted = await jobsService.createJob({
+      jobType: 'unsupported.job',
+      payload: {},
+    });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/jobs/' + accepted.jobId + '/run')
+      .expect(201);
+
+    const retried = await request(app.getHttpServer())
+      .post('/api/v1/jobs/' + accepted.jobId + '/retry')
+      .expect(201);
+
+    expect(retried.body.status).toBe('queued');
+    expect(retried.body.errorMessage).toBeUndefined();
+  });
+
   it('serves dashboard visualization data and page', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/demo/run')
@@ -218,7 +304,7 @@ describe('DemoController (e2e)', () => {
       .expect(200);
 
     expect(page.text).toContain('内容工作流');
-    expect(page.text).toContain('可视化看板');
+    expect(page.text).toContain('管理面板');
     expect(page.text).toContain('/dashboard/visualization');
     expect(page.text).toContain('platformFilter');
     expect(page.text).toContain('applyFiltersBtn');
@@ -228,23 +314,35 @@ describe('DemoController (e2e)', () => {
     expect(page.text).toContain('overviewDetail');
     expect(page.text).toContain('sourceDetail');
     expect(page.text).toContain('运行采集');
+    expect(page.text).toContain('同步指标');
     expect(page.text).toContain('查看任务');
     expect(page.text).toContain('同步来源');
-    expect(page.text).toContain('任务工作区');
-    expect(page.text).toContain('任务详情');
+    expect(page.text).toContain('任务');
     expect(page.text).toContain('jobDetail');
+    expect(page.text).toContain('jobStatusStageFilter');
+    expect(page.text).toContain('重新入队');
+    expect(page.text).toContain('修改内容');
+    expect(page.text).toContain('展开编辑');
+    expect(page.text).toContain('刚保存');
+    expect(page.text).toContain('复制到全部其他平台');
+    expect(page.text).toContain('保存发布内容');
     expect(page.text).toContain('新建来源');
-    expect(page.text).toContain('来源编辑器');
+    expect(page.text).toContain('编辑来源');
     expect(page.text).toContain('保存来源');
     expect(page.text).toContain('采集任务已入队');
     expect(page.text).toContain('topicDetail');
-    expect(page.text).toContain('选择选题');
+    expect(page.text).toContain('topicSort');
+    expect(page.text).toContain('候选素材');
+    expect(page.text).toContain('素材详情');
+    expect(page.text).toContain('主素材');
+    expect(page.text).toContain('展开原文');
+    expect(page.text).toContain('选中');
     expect(page.text).toContain('draftDetail');
     expect(page.text).toContain('渲染素材');
     expect(page.text).toContain('reviewDetail');
-    expect(page.text).toContain('审核通过');
+    expect(page.text).toContain('通过');
     expect(page.text).toContain('publishDetail');
-    expect(page.text).toContain('创建发布任务');
-    expect(page.text).toContain('执行发布');
+    expect(page.text).toContain('创建任务');
+    expect(page.text).toContain('发布');
   });
 });

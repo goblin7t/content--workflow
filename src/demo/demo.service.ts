@@ -94,7 +94,7 @@ export class DemoService {
       }
     }
 
-    await this.metricsService.syncMetrics();
+    await this.metricsService.executeMetricsSync();
     const publishTasks = await this.store.listPublishTasks({});
     const metrics = await this.store.listMetrics({});
 

@@ -7,6 +7,7 @@ import { IngestionService } from '../src/ingestion/ingestion.service';
 import { JOB_STATUS, JOB_TYPE } from '../src/jobs/jobs.constants';
 import { JobsRunnerService } from '../src/jobs/jobs.runner';
 import { JobsService } from '../src/jobs/jobs.service';
+import { MetricsService } from '../src/metrics/metrics.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SourcesService } from '../src/sources/sources.service';
 import { WorkflowStoreService } from '../src/common/services/workflow-store.service';
@@ -20,6 +21,7 @@ describe('Workflow services (integration)', () => {
   let jobsRunner: JobsRunnerService;
   let sourcesService: SourcesService;
   let ingestionService: IngestionService;
+  let metricsService: MetricsService;
   let store: WorkflowStoreService;
 
   beforeEach(async () => {
@@ -42,6 +44,7 @@ describe('Workflow services (integration)', () => {
     jobsRunner = moduleRef.get(JobsRunnerService);
     sourcesService = moduleRef.get(SourcesService);
     ingestionService = moduleRef.get(IngestionService);
+    metricsService = moduleRef.get(MetricsService);
     store = moduleRef.get(WorkflowStoreService);
   });
 
@@ -101,8 +104,22 @@ describe('Workflow services (integration)', () => {
     expect(visualization.sources.every((item) => item.createdAt && item.updatedAt)).toBe(true);
     expect(visualization.topics).toHaveLength(4);
     expect(visualization.topics[0].normalizedItemCount).toBeGreaterThan(0);
+    expect(visualization.topics[0].createdAt).toBeTruthy();
+    expect(visualization.topics[0].sourceCount).toBeGreaterThan(0);
+    expect(visualization.topics[0].platforms.length).toBeGreaterThan(0);
+    expect(visualization.topics[0].sourceNames.length).toBeGreaterThan(0);
+    expect(visualization.topics[0].hotKeywords.length).toBeGreaterThan(0);
+    expect(visualization.topics[0].candidateItems.length).toBeGreaterThanOrEqual(3);
+    expect(visualization.topics[0].candidateItems.length).toBeLessThanOrEqual(10);
+    expect(visualization.topics[0].candidateItems[0].sourceName).toBeTruthy();
+    expect(visualization.topics[0].candidateItems.some((item) => item.isPrimary)).toBe(true);
+    expect(visualization.topics[0].candidateItems.some((item) => item.fullText)).toBe(true);
+    expect(visualization.topics[0].recommendation).toBeTruthy();
+    expect(visualization.topics.every((topic) => topic.normalizedItemCount >= 3 && topic.normalizedItemCount <= 10)).toBe(true);
     expect(visualization.drafts).toHaveLength(4);
     expect(visualization.reviews).toHaveLength(4);
+    expect(visualization.reviews[0].variants.length).toBeGreaterThan(0);
+    expect(visualization.reviews[0].variants[0].platform).toBeTruthy();
     expect(visualization.publishes).toHaveLength(16);
     expect(visualization.publishes[0].channelVariantId).toBeTruthy();
     expect(visualization.publishes[0].draftType).toBeTruthy();
@@ -137,6 +154,8 @@ describe('Workflow services (integration)', () => {
     expect(visualization.topics).toHaveLength(1);
     expect(visualization.drafts).toHaveLength(1);
     expect(visualization.reviews).toHaveLength(1);
+    expect(visualization.reviews[0].variants.length).toBeGreaterThan(0);
+    expect(visualization.reviews[0].variants.some((variant) => variant.platform === 'tiktok')).toBe(true);
     expect(visualization.publishes).toHaveLength(1);
     expect(visualization.publishes[0].platform).toBe('tiktok');
     expect(visualization.publishCandidates).toHaveLength(0);
@@ -172,5 +191,45 @@ describe('Workflow services (integration)', () => {
     expect(visualization.jobs).toHaveLength(1);
     expect(visualization.jobs[0].jobType).toBe(JOB_TYPE.INGESTION_RUN_ALL_SOURCES);
     expect(visualization.jobs[0].status).toBe(JOB_STATUS.SUCCEEDED);
+  });
+
+  it('enqueues metrics sync as a content job and executes it through the job runner', async () => {
+    await demoService.runDemo({
+      resetStore: true,
+      topicDate: '2025-02-14',
+    });
+
+    const accepted = await metricsService.syncMetrics();
+    expect(accepted.status).toBe('queued');
+
+    const queuedJob = await jobsService.getJob(accepted.jobId);
+    expect(queuedJob.jobType).toBe(JOB_TYPE.METRICS_SYNC_ALL);
+    expect(queuedJob.status).toBe(JOB_STATUS.QUEUED);
+
+    const before = await store.listMetrics({});
+    const completedJob = await jobsRunner.runJob(queuedJob.id);
+    const after = await store.listMetrics({});
+
+    expect(completedJob.status).toBe(JOB_STATUS.SUCCEEDED);
+    expect(after.length).toBeGreaterThan(before.length);
+
+    const visualization = await dashboardService.getVisualization({});
+    expect(visualization.jobs.some((job) => job.jobType === JOB_TYPE.METRICS_SYNC_ALL)).toBe(true);
+  });
+
+  it('requeues a failed job for another attempt', async () => {
+    const accepted = await jobsService.createJob({
+      jobType: 'unsupported.job',
+      payload: {},
+    });
+
+    const failedJob = await jobsRunner.runJob(accepted.jobId);
+    expect(failedJob.status).toBe(JOB_STATUS.FAILED);
+
+    const retried = await jobsService.retryJob(failedJob.id);
+    expect(retried.status).toBe(JOB_STATUS.QUEUED);
+    expect(retried.errorMessage).toBeUndefined();
+    expect(retried.startedAt).toBeUndefined();
+    expect(retried.finishedAt).toBeUndefined();
   });
 });

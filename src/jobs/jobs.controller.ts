@@ -30,4 +30,10 @@ export class JobsController {
   runJob(@Param('jobId') jobId: string): Promise<ContentJobDto> {
     return this.jobsRunner.runJob(jobId);
   }
+
+  @Post(':jobId/retry')
+  @ApiOperation({ summary: 'Move a failed workflow job back to queued' })
+  retryJob(@Param('jobId') jobId: string): Promise<ContentJobDto> {
+    return this.jobsService.retryJob(jobId);
+  }
 }
